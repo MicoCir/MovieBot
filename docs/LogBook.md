@@ -46,3 +46,20 @@ La evaluación se dividirá en tres suites: routing end-to-end, agente TMDB y ag
 Las etiquetas se derivarán de especificaciones estructuradas antes de generar las consultas en lenguaje natural. Se utilizarán splits `dev`, `test` y `holdout`, manteniendo juntas las variaciones de una misma semilla. Las métricas cubrirán routing, tool calls, retrieval, grounding, errores y estabilidad.
 
 El Silver Dataset se utilizará para comparar versiones y detectar fallos, pero no se considerará un dataset Gold ni una validación de producción.
+
+## LB-0004 — Spikes de viabilidad de fuentes de datos
+
+**Sprint:** S00 — Kick-off  
+**Tarea:** E0-T4 — Adquirir, inspeccionar y validar las tres fuentes de datos
+
+### Resumen
+
+Se implementaron tres spikes independientes para validar la viabilidad de las fuentes de datos del proyecto: TMDB API, dataset Netflix/Kaggle y Meilisearch Community Edition.
+
+El spike TMDB valida credenciales, genera un snapshot sanitizado (sin secretos) y produce un inventario de campos del endpoint `trending/movie/{day|week}`. El spike Netflix perfila el dataset (tipos, nulos, duplicados), extrae una muestra mínima estratificada y calcula un fingerprint SHA-256. El spike Meilisearch levanta un contenedor efímero y verifica capacidades CE (full-text con typos, filtros facetados, búsqueda semántica e híbrida) sin activar features Enterprise.
+
+Los tres resultados se consolidan en un Manifiesto de Viabilidad (`viability_manifest.json`) que registra procedencia, versión, checksum, limitaciones y decisiones por fuente. Un clasificador de artefactos diferencia lo apto para Git de lo excluido.
+
+Se escribieron 180 tests (10 property-based con Hypothesis + unit tests con mocks/respx) cubriendo las 10 propiedades de correctness definidas en el diseño. Se verificó el aislamiento de imports: ningún spike referencia módulos de agente, routing ni recomendación.
+
+---

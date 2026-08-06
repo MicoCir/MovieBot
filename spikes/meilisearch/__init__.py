@@ -1,0 +1,1 @@
+"""Meilisearch CE viability spike."""

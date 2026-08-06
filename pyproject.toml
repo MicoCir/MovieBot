@@ -1,0 +1,28 @@
+[project]
+name = "moviebot-spikes"
+version = "0.1.0"
+description = "Source viability spikes for MovieBot Sprint 0"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx",
+    "pydantic>=2.0",
+    "pandas",
+    "docker",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-mock",
+    "hypothesis[pandas]",
+    "respx",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "property: Property-based tests (Hypothesis)",
+    "unit: Unit tests with mocks",
+    "smoke: Smoke tests requiring external services",
+    "integration: Integration tests requiring Docker",
+]
+testpaths = ["spikes/tests"]
