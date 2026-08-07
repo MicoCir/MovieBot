@@ -1,0 +1,638 @@
+{
+  "coverage": {
+    "all_titles": [
+      {
+        "field": "title",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 99.98,
+        "unique_count": 5798
+      },
+      {
+        "field": "description",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 99.69,
+        "unique_count": 5829
+      },
+      {
+        "field": "release_year",
+        "max_value": 2022,
+        "min_value": 1945,
+        "pct_non_null": 100.0,
+        "unique_count": 63
+      },
+      {
+        "field": "genres",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 98.99,
+        "unique_count": 1725
+      },
+      {
+        "field": "age_certification",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 55.23,
+        "unique_count": 11
+      },
+      {
+        "field": "imdb_id",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 93.11,
+        "unique_count": 5447
+      },
+      {
+        "field": "imdb_score",
+        "max_value": 9.6,
+        "min_value": 1.5,
+        "pct_non_null": 91.76,
+        "unique_count": 80
+      },
+      {
+        "field": "tmdb_popularity",
+        "max_value": 2274.044,
+        "min_value": 0.0094417458789051,
+        "pct_non_null": 98.44,
+        "unique_count": 4889
+      },
+      {
+        "field": "tmdb_score",
+        "max_value": 10.0,
+        "min_value": 0.5,
+        "pct_non_null": 94.68,
+        "unique_count": 394
+      }
+    ],
+    "movies_only": [
+      {
+        "field": "title",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 99.97,
+        "unique_count": 3724
+      },
+      {
+        "field": "description",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 99.76,
+        "unique_count": 3734
+      },
+      {
+        "field": "release_year",
+        "max_value": 2022,
+        "min_value": 1954,
+        "pct_non_null": 100.0,
+        "unique_count": 62
+      },
+      {
+        "field": "genres",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 99.09,
+        "unique_count": 1104
+      },
+      {
+        "field": "age_certification",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 36.86,
+        "unique_count": 5
+      },
+      {
+        "field": "imdb_id",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 93.0,
+        "unique_count": 3482
+      },
+      {
+        "field": "imdb_score",
+        "max_value": 9.1,
+        "min_value": 1.5,
+        "pct_non_null": 91.59,
+        "unique_count": 74
+      },
+      {
+        "field": "tmdb_popularity",
+        "max_value": 2274.044,
+        "min_value": 0.0094417458789051,
+        "pct_non_null": 98.34,
+        "unique_count": 3248
+      },
+      {
+        "field": "tmdb_score",
+        "max_value": 10.0,
+        "min_value": 1.0,
+        "pct_non_null": 94.79,
+        "unique_count": 266
+      }
+    ],
+    "shows_only": [
+      {
+        "field": "title",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 100.0,
+        "unique_count": 2097
+      },
+      {
+        "field": "description",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 99.57,
+        "unique_count": 2096
+      },
+      {
+        "field": "release_year",
+        "max_value": 2022,
+        "min_value": 1945,
+        "pct_non_null": 100.0,
+        "unique_count": 42
+      },
+      {
+        "field": "genres",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 98.81,
+        "unique_count": 845
+      },
+      {
+        "field": "age_certification",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 87.89,
+        "unique_count": 6
+      },
+      {
+        "field": "imdb_id",
+        "max_value": null,
+        "min_value": null,
+        "pct_non_null": 93.3,
+        "unique_count": 1965
+      },
+      {
+        "field": "imdb_score",
+        "max_value": 9.6,
+        "min_value": 2.0,
+        "pct_non_null": 92.07,
+        "unique_count": 71
+      },
+      {
+        "field": "tmdb_popularity",
+        "max_value": 2226.231,
+        "min_value": 0.6,
+        "pct_non_null": 98.62,
+        "unique_count": 1923
+      },
+      {
+        "field": "tmdb_score",
+        "max_value": 10.0,
+        "min_value": 0.5,
+        "pct_non_null": 94.49,
+        "unique_count": 196
+      }
+    ]
+  },
+  "credit_coverage": {
+    "all_titles": {
+      "pct_with_actors": 91.28,
+      "pct_with_both": 66.53,
+      "pct_with_directors": 69.08
+    },
+    "movies_only": {
+      "pct_with_actors": 94.58,
+      "pct_with_both": 91.11,
+      "pct_with_directors": 93.99
+    },
+    "shows_only": {
+      "pct_with_actors": 85.42,
+      "pct_with_both": 22.84,
+      "pct_with_directors": 24.79
+    }
+  },
+  "credit_stats": {
+    "all_titles": {
+      "avg_actors_per_title": 12.52,
+      "avg_directors_per_title": 0.78,
+      "records_per_role": {
+        "ACTOR": 73251,
+        "DIRECTOR": 4550
+      },
+      "titles_with_zero_actors": 510,
+      "titles_with_zero_directors": 1809,
+      "unique_persons_per_role": {
+        "ACTOR": 51544,
+        "DIRECTOR": 3457
+      }
+    },
+    "movies_only": {
+      "avg_actors_per_title": 15.82,
+      "avg_directors_per_title": 1.03,
+      "records_per_role": {
+        "ACTOR": 59220,
+        "DIRECTOR": 3871
+      },
+      "titles_with_zero_actors": 203,
+      "titles_with_zero_directors": 225,
+      "unique_persons_per_role": {
+        "ACTOR": 43764,
+        "DIRECTOR": 2920
+      }
+    },
+    "shows_only": {
+      "avg_actors_per_title": 6.66,
+      "avg_directors_per_title": 0.32,
+      "records_per_role": {
+        "ACTOR": 14031,
+        "DIRECTOR": 679
+      },
+      "titles_with_zero_actors": 307,
+      "titles_with_zero_directors": 1584,
+      "unique_persons_per_role": {
+        "ACTOR": 11276,
+        "DIRECTOR": 614
+      }
+    }
+  },
+  "field_classifications": [
+    {
+      "category": "utilizable como filtro duro",
+      "coverage_pct": 100.0,
+      "field": "type",
+      "reason": "cobertura alta (100.00% >= 90%) y directamente verificable"
+    },
+    {
+      "category": "utilizable con normalización previa",
+      "coverage_pct": 99.09,
+      "field": "genres",
+      "reason": "cobertura 99.09%, requiere normalización previa"
+    },
+    {
+      "category": "utilizable como filtro duro",
+      "coverage_pct": 100.0,
+      "field": "release_year",
+      "reason": "cobertura alta (100.00% >= 90%) y directamente verificable"
+    },
+    {
+      "category": "no fiable para filtros duros",
+      "coverage_pct": 36.86,
+      "field": "age_certification",
+      "reason": "cobertura insuficiente (36.86% < 70%)"
+    },
+    {
+      "category": "no fiable para filtros duros",
+      "coverage_pct": 99.76,
+      "field": "description",
+      "reason": "valores no determinísticamente verificables (cobertura 99.76%)"
+    },
+    {
+      "category": "utilizable como filtro duro",
+      "coverage_pct": 93.0,
+      "field": "imdb_id",
+      "reason": "cobertura alta (93.00% >= 90%) y directamente verificable"
+    },
+    {
+      "category": "utilizable como filtro duro",
+      "coverage_pct": 91.59,
+      "field": "imdb_score",
+      "reason": "cobertura alta (91.59% >= 90%) y directamente verificable"
+    },
+    {
+      "category": "utilizable como filtro duro",
+      "coverage_pct": 98.34,
+      "field": "tmdb_popularity",
+      "reason": "cobertura alta (98.34% >= 90%) y directamente verificable"
+    },
+    {
+      "category": "utilizable como filtro duro",
+      "coverage_pct": 94.79,
+      "field": "tmdb_score",
+      "reason": "cobertura alta (94.79% >= 90%) y directamente verificable"
+    },
+    {
+      "category": "utilizable con normalización previa",
+      "coverage_pct": 94.58,
+      "field": "actors (via credits.csv)",
+      "reason": "cobertura 94.58%, requiere normalización previa"
+    },
+    {
+      "category": "utilizable con normalización previa",
+      "coverage_pct": 93.99,
+      "field": "directors (via credits.csv)",
+      "reason": "cobertura 93.99%, requiere normalización previa"
+    }
+  ],
+  "genre_incompatibility_note": "Los géneros TMDB (IDs numéricos, e.g. '28', '35') y los géneros Netflix (nombres string, e.g. 'action', 'comedy') son semánticamente diferentes y NO directamente comparables. La comparación cross-source de géneros requiere una tabla de mapeo de IDs TMDB a nombres que está fuera del alcance de esta feature.",
+  "genre_stats": {
+    "titles_null_or_empty_genres": 59,
+    "titles_per_genre": {
+      "action": 1157,
+      "animation": 705,
+      "comedy": 2325,
+      "crime": 936,
+      "documentation": 952,
+      "drama": 2968,
+      "european": 443,
+      "family": 682,
+      "fantasy": 630,
+      "history": 254,
+      "horror": 378,
+      "music": 262,
+      "reality": 234,
+      "romance": 971,
+      "scifi": 589,
+      "sport": 170,
+      "thriller": 1228,
+      "war": 163,
+      "western": 41
+    },
+    "unique_genres": [
+      "action",
+      "animation",
+      "comedy",
+      "crime",
+      "documentation",
+      "drama",
+      "european",
+      "family",
+      "fantasy",
+      "history",
+      "horror",
+      "music",
+      "reality",
+      "romance",
+      "scifi",
+      "sport",
+      "thriller",
+      "war",
+      "western"
+    ],
+    "unparseable_count": 0
+  },
+  "identity_strategy": {
+    "cross_source": "identidades independientes, sin canónica compartida",
+    "netflix_format": "campo id nativo (e.g. tm84618)",
+    "tmdb_format": "prefijo tmdb:{numeric_id} (e.g. tmdb:123456)"
+  },
+  "observations": [
+    "Campos con cobertura >= 90% y verificables en MOVIE: genres, imdb_id, imdb_score, release_year, title, tmdb_popularity, tmdb_score",
+    "Campos con cobertura limitada (< 70% en MOVIE): age_certification",
+    "Cobertura de actores en MOVIE: 94.58%, directores: 93.99%. Join determinista via titles.id = credits.id permite verificar exhaustivamente personas asociadas a cada título.",
+    "Total géneros únicos encontrados: 19. Títulos sin género asignado: 59."
+  ],
+  "relationships": {
+    "credits_without_title": 0,
+    "titles_to_credits_1n": {
+      "avg_value": 13.3,
+      "max_value": 208,
+      "min_value": 0
+    },
+    "titles_to_persons_mn_persons_per_title": {
+      "avg_value": 13.23,
+      "max_value": 208,
+      "min_value": 0
+    },
+    "titles_to_persons_mn_titles_per_person": {
+      "avg_value": 1.42,
+      "max_value": 25,
+      "min_value": 1
+    },
+    "titles_without_credits": 361
+  },
+  "schemas": [
+    {
+      "columns": [
+        {
+          "inferred_type": "string",
+          "max_value": null,
+          "min_value": null,
+          "name": "id",
+          "null_count": 0,
+          "unique_count": 5850
+        },
+        {
+          "inferred_type": "mixed",
+          "max_value": null,
+          "min_value": null,
+          "name": "title",
+          "null_count": 1,
+          "unique_count": 5798
+        },
+        {
+          "inferred_type": "string",
+          "max_value": null,
+          "min_value": null,
+          "name": "type",
+          "null_count": 0,
+          "unique_count": 2
+        },
+        {
+          "inferred_type": "string",
+          "max_value": null,
+          "min_value": null,
+          "name": "description",
+          "null_count": 18,
+          "unique_count": 5829
+        },
+        {
+          "inferred_type": "integer",
+          "max_value": 2022,
+          "min_value": 1945,
+          "name": "release_year",
+          "null_count": 0,
+          "unique_count": 63
+        },
+        {
+          "inferred_type": "string",
+          "max_value": null,
+          "min_value": null,
+          "name": "age_certification",
+          "null_count": 2619,
+          "unique_count": 11
+        },
+        {
+          "inferred_type": "mixed",
+          "max_value": null,
+          "min_value": null,
+          "name": "runtime",
+          "null_count": 0,
+          "unique_count": 202
+        },
+        {
+          "inferred_type": "list[string]",
+          "max_value": null,
+          "min_value": null,
+          "name": "genres",
+          "null_count": 59,
+          "unique_count": 1725
+        },
+        {
+          "inferred_type": "list[string]",
+          "max_value": null,
+          "min_value": null,
+          "name": "production_countries",
+          "null_count": 229,
+          "unique_count": 451
+        },
+        {
+          "inferred_type": "float",
+          "max_value": 42.0,
+          "min_value": 1.0,
+          "name": "seasons",
+          "null_count": 3744,
+          "unique_count": 26
+        },
+        {
+          "inferred_type": "string",
+          "max_value": null,
+          "min_value": null,
+          "name": "imdb_id",
+          "null_count": 403,
+          "unique_count": 5447
+        },
+        {
+          "inferred_type": "float",
+          "max_value": 9.6,
+          "min_value": 1.5,
+          "name": "imdb_score",
+          "null_count": 482,
+          "unique_count": 80
+        },
+        {
+          "inferred_type": "float",
+          "max_value": 2294231.0,
+          "min_value": 5.0,
+          "name": "imdb_votes",
+          "null_count": 498,
+          "unique_count": 3880
+        },
+        {
+          "inferred_type": "float",
+          "max_value": 2274.044,
+          "min_value": 0.0094417458789051,
+          "name": "tmdb_popularity",
+          "null_count": 91,
+          "unique_count": 4889
+        },
+        {
+          "inferred_type": "float",
+          "max_value": 10.0,
+          "min_value": 0.5,
+          "name": "tmdb_score",
+          "null_count": 311,
+          "unique_count": 394
+        }
+      ],
+      "exact_duplicates": {
+        "duplicate_key_extra_rows": 0,
+        "duplicate_key_values": 0,
+        "exact_duplicate_rows": 0,
+        "key_columns": [
+          "age_certification",
+          "description",
+          "genres",
+          "id",
+          "imdb_id",
+          "imdb_score",
+          "imdb_votes",
+          "production_countries",
+          "release_year",
+          "runtime",
+          "seasons",
+          "title",
+          "tmdb_popularity",
+          "tmdb_score",
+          "type"
+        ]
+      },
+      "filename": "titles.csv",
+      "key_duplicates": {
+        "duplicate_key_extra_rows": 0,
+        "duplicate_key_values": 0,
+        "exact_duplicate_rows": 0,
+        "key_columns": [
+          "id"
+        ]
+      },
+      "row_count": 5850
+    },
+    {
+      "columns": [
+        {
+          "inferred_type": "integer",
+          "max_value": 2462818,
+          "min_value": 7,
+          "name": "person_id",
+          "null_count": 0,
+          "unique_count": 54589
+        },
+        {
+          "inferred_type": "string",
+          "max_value": null,
+          "min_value": null,
+          "name": "id",
+          "null_count": 0,
+          "unique_count": 5489
+        },
+        {
+          "inferred_type": "string",
+          "max_value": null,
+          "min_value": null,
+          "name": "name",
+          "null_count": 0,
+          "unique_count": 54314
+        },
+        {
+          "inferred_type": "mixed",
+          "max_value": null,
+          "min_value": null,
+          "name": "character",
+          "null_count": 9774,
+          "unique_count": 47273
+        },
+        {
+          "inferred_type": "string",
+          "max_value": null,
+          "min_value": null,
+          "name": "role",
+          "null_count": 0,
+          "unique_count": 2
+        }
+      ],
+      "exact_duplicates": {
+        "duplicate_key_extra_rows": 0,
+        "duplicate_key_values": 0,
+        "exact_duplicate_rows": 0,
+        "key_columns": [
+          "character",
+          "id",
+          "name",
+          "person_id",
+          "role"
+        ]
+      },
+      "filename": "credits.csv",
+      "key_duplicates": {
+        "duplicate_key_extra_rows": 88,
+        "duplicate_key_values": 85,
+        "exact_duplicate_rows": 88,
+        "key_columns": [
+          "id",
+          "person_id",
+          "role"
+        ]
+      },
+      "row_count": 77801
+    }
+  ],
+  "type_distribution": {
+    "counts": {
+      "MOVIE": 3744,
+      "SHOW": 2106
+    },
+    "null_or_unrecognized": 0
+  }
+}

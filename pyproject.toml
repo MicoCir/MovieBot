@@ -19,6 +19,7 @@ dependencies = [
 dev = [
     "pytest",
     "pytest-asyncio",
+    "hypothesis",
     "ruff",
     "mypy",
 ]
@@ -26,12 +27,26 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+addopts = "-m 'not integration'"
+markers = [
+    "integration: tests that require external services (TMDB API, network, etc.)",
+]
 
 [tool.ruff]
 target-version = "py312"
 
 [tool.mypy]
 python_version = "3.12"
+
+[[tool.mypy.overrides]]
+module = [
+    "moviebot.repositories.tmdb_connector",
+    "moviebot.repositories.fixture_writer",
+    "moviebot.repositories.tmdb_errors",
+    "moviebot.repositories.tmdb_models",
+    "moviebot.tools.*",
+]
+disallow_untyped_defs = true
 
 [build-system]
 requires = ["hatchling"]
