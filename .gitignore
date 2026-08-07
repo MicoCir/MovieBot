@@ -220,3 +220,7 @@ __marimo__/
 
 # Kiro folder
 .kiro/*
+
+# vscode folder
+.vscode/*
+.python-version
