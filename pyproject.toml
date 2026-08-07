@@ -1,7 +1,41 @@
 [project]
 name = "moviebot"
 version = "0.1.0"
-description = "Add your description here"
+description = "Movie recommendation chatbot using LangGraph"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "langgraph",
+    "langchain-openai",
+    "pydantic",
+    "pydantic-settings",
+    "httpx",
+    "meilisearch",
+    "fastapi",
+    "uvicorn",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+    "mypy",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.mypy]
+python_version = "3.12"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/moviebot"]

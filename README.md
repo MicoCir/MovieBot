@@ -1,31 +1,52 @@
 # MovieBot
-Agente conversacional recomendador de películas
 
-## Setup del entorno
+Agente conversacional recomendador de películas.
 
-### Requisitos previos
-- [uv](https://docs.astral.sh/uv/) instalado
-- Python 3.12+
+## Requisitos del sistema
 
-### Instalación
+- Python ≥ 3.12
+- [uv](https://docs.astral.sh/uv/) como gestor de paquetes y entornos
+
+## Instalación
 
 ```bash
-# Crear entorno virtual
-uv venv .venv --python 3.12
-
-# Activar entorno virtual (Windows PowerShell)
-.venv\Scripts\Activate.ps1
-
-# Instalar dependencias
 uv sync
 ```
 
-### Gestión de dependencias
+## Configuración
 
-El proyecto usa `uv` con `pyproject.toml` para gestionar dependencias.
+Copiar `.env.example` a `.env` y completar las variables requeridas:
 
 ```bash
-uv add nombre_libreria       # Añadir dependencia
-uv remove nombre_libreria    # Eliminar dependencia
-uv sync                      # Instalar todo desde el lockfile
+cp .env.example .env
+```
+
+## Ejecución
+
+```bash
+uv run uvicorn moviebot.interface.api:app --reload
+```
+
+## Tests
+
+```bash
+uv run pytest
+```
+
+## Lint
+
+```bash
+uv run ruff check src/moviebot/ tests/
+```
+
+## Formato
+
+```bash
+uv run ruff format --check src/moviebot/ tests/
+```
+
+## Type checking
+
+```bash
+uv run mypy src/moviebot/
 ```
