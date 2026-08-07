@@ -1,0 +1,55 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "id": 400001,
+      "title": "Echoes of Tomorrow",
+      "overview": null,
+      "release_date": "2024-03-15",
+      "vote_average": 6.5,
+      "vote_count": 432,
+      "popularity": 45.678,
+      "poster_path": null,
+      "backdrop_path": "/echoesTomorrowBack.jpg",
+      "genre_ids": [878],
+      "original_language": "en",
+      "adult": false,
+      "video": false,
+      "media_type": "movie"
+    },
+    {
+      "id": 400002,
+      "title": "Unnamed Project",
+      "overview": "",
+      "release_date": "",
+      "vote_average": 0.0,
+      "vote_count": 0,
+      "popularity": 12.001,
+      "poster_path": null,
+      "backdrop_path": null,
+      "genre_ids": [],
+      "original_language": "en",
+      "adult": false,
+      "video": false,
+      "media_type": "movie"
+    },
+    {
+      "id": 400003,
+      "title": "Broken Compass",
+      "overview": "A survival thriller about a pilot stranded in the Arctic after a crash landing.",
+      "release_date": "2024-02-10",
+      "vote_average": 7.1,
+      "vote_count": 890,
+      "popularity": 63.210,
+      "poster_path": "/brokenCompass.jpg",
+      "backdrop_path": null,
+      "genre_ids": [53, 28],
+      "original_language": "en",
+      "adult": false,
+      "video": false,
+      "media_type": "movie"
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 3
+}

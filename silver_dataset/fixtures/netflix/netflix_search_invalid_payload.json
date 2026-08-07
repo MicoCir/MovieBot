@@ -1,0 +1,6 @@
+{
+  "error": "invalid_payload",
+  "status_code": 200,
+  "message": "Response body did not match expected schema",
+  "raw_body": "<html><body>Service Unavailable</body></html>"
+}

@@ -1,0 +1,47 @@
+{
+  "results": [
+    {
+      "show_id": "s401",
+      "type": "Movie",
+      "title": "Unnamed Documentary",
+      "director": null,
+      "cast": null,
+      "country": "United States",
+      "date_added": "December 1, 2020",
+      "release_year": 2020,
+      "rating": "TV-G",
+      "duration": "85 min",
+      "listed_in": "Documentaries",
+      "description": "A look at modern architecture and its environmental impact."
+    },
+    {
+      "show_id": "s402",
+      "type": "TV Show",
+      "title": "Mystery Island",
+      "director": null,
+      "cast": "John Doe",
+      "country": null,
+      "date_added": null,
+      "release_year": 2019,
+      "rating": "TV-14",
+      "duration": "1 Season",
+      "listed_in": "Thrillers",
+      "description": null
+    },
+    {
+      "show_id": "s403",
+      "type": "Movie",
+      "title": "Fragments",
+      "director": "Unknown",
+      "cast": "",
+      "country": "",
+      "date_added": "August 15, 2021",
+      "release_year": 2021,
+      "rating": null,
+      "duration": null,
+      "listed_in": "Dramas, Independent Movies",
+      "description": "A fragmented narrative exploring memory and identity through interconnected vignettes."
+    }
+  ],
+  "total": 3
+}

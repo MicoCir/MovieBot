@@ -63,3 +63,32 @@ Los tres resultados se consolidan en un Manifiesto de Viabilidad (`viability_man
 Se escribieron 180 tests (10 property-based con Hypothesis + unit tests con mocks/respx) cubriendo las 10 propiedades de correctness definidas en el diseño. Se verificó el aislamiento de imports: ningún spike referencia módulos de agente, routing ni recomendación.
 
 ---
+
+## LB-0005 — Implementación del módulo Silver Dataset
+
+**Sprint:** S01 — Silver Dataset  
+**Tarea:** Implementar el pipeline completo de generación, validación, versionado y evaluación
+
+### Resumen
+
+Se implementó el módulo `silver_dataset/` completo con todos los componentes del pipeline definidos en la especificación.
+
+**Modelos y contratos:** Se crearon los modelos Pydantic centrales (`SilverCase`, `LatentSpecification`, `GenerationMetadata`, `CoverageMatrix`) con enums normalizados en minúsculas. El `SilverCase` incluye un validador de consistencia route/tool/action que impide combinaciones inválidas antes de llegar a cualquier componente downstream.
+
+**Generación:** Se implementó la expansión de la matriz de cobertura en especificaciones latentes, la derivación determinista de etiquetas (separada de la generación LLM), el generador de queries via Ollama con reintentos y backoff exponencial, el `CheckpointManager` para reanudación sin duplicados, y el motor de variaciones (typos, code-switching).
+
+**I/O y acceso:** Se implementaron `read_jsonl`/`write_jsonl` con reporte de errores por línea, `PrettyPrinter`, y `SilverDatasetLoader` con filtros combinables, control de acceso al split holdout y validación de checksum.
+
+**Fixtures:** Se crearon 16 ficheros JSON (8 TMDB + 8 Netflix) cubriendo resultados normales, vacíos, parciales, timeout, error de autenticación y payload inválido. Se implementó `FixtureRegistry` para gestión determinista.
+
+**Validación:** Pipeline completo con `SchemaValidator`, `RuleValidator` (integridad de fixtures e IDs), `Critic` LLM (sin modificar etiquetas), `Deduplicator` (exacto, normalizado, semántico via SequenceMatcher) y lógica de asignación de `automatic_validation_status`.
+
+**Versionado:** `compute_dataset_checksum` con SHA-256 sobre JSON canónico ordenado, `VersionRegistry`, y generación de `silver_dataset_card.md` con estadísticas de distribución.
+
+**Evaluación:** Cuatro capas de métricas (routing, tool calls, retrieval, grounding), `BaselineRunner` con detección de errores de infraestructura, generación de scorecard y análisis de fallos con propuesta de nuevas semillas para hard-cases.
+
+**CLI:** Tres comandos (`generate`, `validate`, `evaluate`) con checkpoint idempotente, reporte de progreso y resumen al finalizar.
+
+**Tests:** 22 property-based tests con Hypothesis (≥100 ejemplos cada uno) cubriendo las 22 propiedades de correctness del design document, más ~175 unit tests adicionales. Total: ~197 tests en el módulo.
+
+---

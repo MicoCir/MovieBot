@@ -1,0 +1,47 @@
+{
+  "results": [
+    {
+      "show_id": "s201",
+      "type": "Movie",
+      "title": "Dark Corridors",
+      "director": "David Fincher",
+      "cast": "Jake Gyllenhaal, Rosamund Pike, Oscar Isaac",
+      "country": "United States",
+      "date_added": "October 5, 2021",
+      "release_year": 2021,
+      "rating": "R",
+      "duration": "131 min",
+      "listed_in": "Thrillers, Crime Movies",
+      "description": "A forensic accountant uncovers a money laundering scheme that leads to a deadly conspiracy within the government."
+    },
+    {
+      "show_id": "s202",
+      "type": "TV Show",
+      "title": "The Silent Witness",
+      "director": null,
+      "cast": "Elisabeth Moss, Wagner Moura, Carrie Coon",
+      "country": "United Kingdom",
+      "date_added": "February 14, 2022",
+      "release_year": 2022,
+      "rating": "TV-MA",
+      "duration": "1 Season",
+      "listed_in": "Thrillers, TV Thrillers, British TV Shows",
+      "description": "A court stenographer becomes the target of a criminal organization after she accidentally records a confession meant to stay secret."
+    },
+    {
+      "show_id": "s203",
+      "type": "Movie",
+      "title": "Vanishing Point",
+      "director": "Denis Villeneuve",
+      "cast": "Timothee Chalamet, Zendaya, John David Washington",
+      "country": "Canada, United States",
+      "date_added": "July 20, 2021",
+      "release_year": 2020,
+      "rating": "PG-13",
+      "duration": "118 min",
+      "listed_in": "Thrillers, Sci-Fi & Fantasy",
+      "description": "A physicist discovers that people are disappearing from reality and must race against time before he vanishes too."
+    }
+  ],
+  "total": 3
+}

@@ -1,0 +1,33 @@
+{
+  "results": [
+    {
+      "show_id": "s301",
+      "type": "Movie",
+      "title": "El Secreto del Rio",
+      "director": "Alejandro Gonzalez Inarritu",
+      "cast": "Gael Garcia Bernal, Penelope Cruz, Diego Luna",
+      "country": "Spain, Mexico",
+      "date_added": "April 8, 2021",
+      "release_year": 2020,
+      "rating": "TV-MA",
+      "duration": "142 min",
+      "listed_in": "Dramas, International Movies, Spanish-Language Movies",
+      "description": "In a small Andalusian village, a journalist investigates a decades-old disappearance that the locals refuse to discuss."
+    },
+    {
+      "show_id": "s302",
+      "type": "TV Show",
+      "title": "Cazadores de Sombras",
+      "director": null,
+      "cast": "Ursula Corbero, Alvaro Morte, Itziar Ituno",
+      "country": "Spain",
+      "date_added": "September 30, 2021",
+      "release_year": 2021,
+      "rating": "TV-MA",
+      "duration": "2 Seasons",
+      "listed_in": "Thrillers, TV Thrillers, Spanish-Language TV Shows",
+      "description": "An elite police unit in Madrid tracks down supernatural entities hiding among the civilian population."
+    }
+  ],
+  "total": 2
+}

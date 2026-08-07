@@ -1,0 +1,61 @@
+{
+  "results": [
+    {
+      "show_id": "s101",
+      "type": "Movie",
+      "title": "The Laugh Factory",
+      "director": "Maria Gonzalez",
+      "cast": "Jim Carrey, Tina Fey, Keegan-Michael Key",
+      "country": "United States",
+      "date_added": "March 15, 2021",
+      "release_year": 2020,
+      "rating": "PG-13",
+      "duration": "98 min",
+      "listed_in": "Comedies, Stand-Up Comedy",
+      "description": "A struggling comedian lands a gig at a legendary comedy club and must prove herself in one unforgettable night."
+    },
+    {
+      "show_id": "s102",
+      "type": "TV Show",
+      "title": "Office Antics",
+      "director": null,
+      "cast": "Rashida Jones, Andy Samberg, Chelsea Peretti, Joe Lo Truglio",
+      "country": "United States",
+      "date_added": "June 1, 2020",
+      "release_year": 2019,
+      "rating": "TV-14",
+      "duration": "3 Seasons",
+      "listed_in": "Comedies, TV Comedies",
+      "description": "A mockumentary-style series following the bizarre daily routines of employees at a failing tech startup."
+    },
+    {
+      "show_id": "s103",
+      "type": "Movie",
+      "title": "Wedding Disasters",
+      "director": "Paul Feig",
+      "cast": "Melissa McCarthy, Rose Byrne, Chris O'Dowd",
+      "country": "United Kingdom, United States",
+      "date_added": "November 22, 2021",
+      "release_year": 2021,
+      "rating": "R",
+      "duration": "112 min",
+      "listed_in": "Comedies, Romantic Comedies",
+      "description": "Two rival wedding planners are forced to collaborate on the same ceremony with chaotic results."
+    },
+    {
+      "show_id": "s104",
+      "type": "TV Show",
+      "title": "Familia Locura",
+      "director": null,
+      "cast": "Sofia Vergara, Eugenio Derbez, Ana de la Reguera",
+      "country": "Mexico, United States",
+      "date_added": "January 10, 2022",
+      "release_year": 2021,
+      "rating": "TV-PG",
+      "duration": "2 Seasons",
+      "listed_in": "Comedies, TV Comedies, International TV Shows",
+      "description": "A multigenerational family navigates cultural clashes and hilarious misunderstandings after relocating from Mexico City to Miami."
+    }
+  ],
+  "total": 4
+}

@@ -1,0 +1,5 @@
+{
+  "error": "authentication_failed",
+  "status_code": 401,
+  "message": "Invalid API key: You must be granted a valid key."
+}

@@ -1,0 +1,71 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "id": 300001,
+      "title": "Whispers in the Pines",
+      "overview": "A grief-stricken woman retreats to a remote cabin in Oregon only to discover unsettling truths about the land's dark past.",
+      "release_date": "2024-03-01",
+      "vote_average": 7.6,
+      "vote_count": 1234,
+      "popularity": 88.123,
+      "poster_path": "/whispersPines.jpg",
+      "backdrop_path": "/whispersPinesBack.jpg",
+      "genre_ids": [27, 9648],
+      "original_language": "en",
+      "adult": false,
+      "video": false,
+      "media_type": "movie"
+    },
+    {
+      "id": 300002,
+      "title": "Cuentos de la Luna Roja",
+      "overview": "An animated anthology from Studio Lumina weaving three Latin American folk tales into a visually stunning tapestry of myth and magic.",
+      "release_date": "2024-02-28",
+      "vote_average": 8.3,
+      "vote_count": 876,
+      "popularity": 72.654,
+      "poster_path": "/cuentosLunaRoja.jpg",
+      "backdrop_path": "/cuentosLunaRojaBack.jpg",
+      "genre_ids": [16, 14, 10751],
+      "original_language": "es",
+      "adult": false,
+      "video": false,
+      "media_type": "movie"
+    },
+    {
+      "id": 300003,
+      "title": "Velocity",
+      "overview": "A documentary following three Formula 1 rookies through their grueling first season, capturing the speed, pressure, and human drama behind motorsport.",
+      "release_date": "2024-04-12",
+      "vote_average": 7.9,
+      "vote_count": 654,
+      "popularity": 55.987,
+      "poster_path": "/velocity.jpg",
+      "backdrop_path": "/velocityBack.jpg",
+      "genre_ids": [99, 10770],
+      "original_language": "en",
+      "adult": false,
+      "video": false,
+      "media_type": "movie"
+    },
+    {
+      "id": 300004,
+      "title": "Parisian Nights",
+      "overview": "A romantic comedy about two strangers who keep accidentally meeting at the same Parisian cafe over the course of a year.",
+      "release_date": "2024-01-25",
+      "vote_average": 6.7,
+      "vote_count": 1567,
+      "popularity": 91.345,
+      "poster_path": "/parisianNights.jpg",
+      "backdrop_path": "/parisianNightsBack.jpg",
+      "genre_ids": [10749, 35],
+      "original_language": "fr",
+      "adult": false,
+      "video": false,
+      "media_type": "movie"
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 4
+}

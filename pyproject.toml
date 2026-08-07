@@ -8,6 +8,7 @@ dependencies = [
     "pydantic>=2.0",
     "pandas",
     "docker",
+    "openai",
 ]
 
 [project.optional-dependencies]
@@ -24,5 +25,6 @@ markers = [
     "unit: Unit tests with mocks",
     "smoke: Smoke tests requiring external services",
     "integration: Integration tests requiring Docker",
+    "silver: Silver dataset module tests",
 ]
-testpaths = ["spikes/tests"]
+testpaths = ["spikes/tests", "silver_dataset/tests"]

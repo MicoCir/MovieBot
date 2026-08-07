@@ -38,7 +38,7 @@ Construir un prototipo de chatbot de recomendación audiovisual que:
 | Interfaz | FastAPI, endpoint REST con Server-Sent Events y una interfaz web mínima. | El enunciado deja la interfaz abierta; esta opción demuestra streaming con poco coste de implementación. |
 | “Reciente” o “mejor” | Tendencia no equivale a estreno. La selección empleará una heurística documentada sobre los resultados del endpoint permitido. | Evita atribuir a TMDB información que el endpoint no garantiza. |
 | Netflix | El dataset es un snapshot histórico; no se afirmará disponibilidad actual ni regional. | Limitación intrínseca de la fuente. |
-| Modelo LLM | Cliente OpenAI configurable mediante `OPENAI_API_KEY`, `OPENAI_BASE_URL` y nombre de modelo. | Permite usar el API Gateway facilitado sin acoplar el dominio al proveedor. |
+| Modelo LLM | Cliente OpenAI-compatible configurable mediante `OPENAI_API_KEY`, `OPENAI_BASE_URL` y nombre de modelo. Durante el desarrollo inicial (Sprint 0–4) se usará **Ollama local** con el modelo `qwen3.5:27b` (thinking habilitado) para evitar dependencia de API keys externas y permitir iteración rápida sin coste. La interfaz OpenAI-compatible de Ollama (`http://localhost:11434/v1`) garantiza que la migración a un proveedor remoto sea un cambio de configuración, no de código. | Reduce fricción de arranque, elimina coste de API durante desarrollo, mantiene compatibilidad OpenAI y permite trabajar offline. |
 | Calidad | Los unit tests, aunque solo estén recomendados en el enunciado, se consideran obligatorios para componentes críticos. | El foco declarado es código mantenible y probado. |
 | Idioma | La respuesta seguirá el idioma detectado en la consulta; el MVP deberá cubrir inglés y español. | Amplía robustez sin alterar el dominio funcional. |
 | Propósito del Silver Dataset | No es un corpus de entrenamiento ni una verdad experta: es una suite sintética versionada para evaluar decisiones intermedias y respuesta final. | Permite medir routing, tool calls, retrieval, grounding, errores y estabilidad sin confundir Silver con Gold. |
@@ -48,6 +48,7 @@ Construir un prototipo de chatbot de recomendación audiovisual que:
 | Licencia de búsqueda | Solo se utilizará Meilisearch Community Edition bajo MIT; toda función Enterprise/BUSL queda prohibida. | Mantiene el stack plenamente self-hosted y open source sin dependencia comercial. |
 | Base de trazas | PostgreSQL separado almacenará runs, spans/eventos y resultados de evaluación; los atributos variables usarán `JSONB`. | Las trazas requieren consultas analíticas, relaciones estables, versionado e indexación flexible. |
 | Contenedores | Se crearán cuatro servicios runtime: `frontend`, `backend`, `netflix-db` y `trace-db`, coordinados por Compose. | Mantiene responsabilidades y persistencias separadas sin introducir orquestación distribuida innecesaria. |
+| Infraestructura LLM local | Ollama ejecutándose en el host (no en Docker) sirve modelos locales con API OpenAI-compatible en `http://localhost:11434/v1`. El modelo principal de desarrollo es `qwen3.5:27b` con modo thinking activo. Ollama no forma parte del Compose del proyecto; es un prerequisito del entorno de desarrollo. | Evita acoplar la inferencia al ciclo de vida de Compose, aprovecha la GPU del host directamente y simplifica el desarrollo sin red externa. |
 
 ### 2.3 Alcance comprometido del MVP
 
@@ -430,6 +431,7 @@ Los casos se dividirán por familia/semilla, no por consulta individual: `dev` 6
 
 - Una instalación limpia permite importar y arrancar la aplicación.
 - Están declaradas todas las variables del briefing y las nuevas `MEILISEARCH_URL`, `MEILISEARCH_API_KEY`, `MEILI_MASTER_KEY`, `MEILISEARCH_INDEX_UID`, `MEILISEARCH_EMBEDDER`, `MEILISEARCH_SEMANTIC_RATIO`, `TRACE_DATABASE_URL`, `TRACE_CAPTURE_MODE`, `TRACE_RETENTION_DAYS` y `APP_VERSION`, con defaults solo cuando sea seguro.
+- Los defaults de desarrollo apuntan a Ollama local: `OPENAI_BASE_URL=http://localhost:11434/v1`, `LLM_MODEL=qwen3.5:27b`, `OPENAI_API_KEY=ollama` (placeholder requerido por el cliente OpenAI).
 - Los secretos nunca tienen defaults reales ni se incluyen en el repositorio.
 - Configuración inválida produce mensajes accionables.
 - Existen comandos documentables para servidor, indexación, tests y evaluación.

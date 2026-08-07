@@ -1,0 +1,55 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "id": 200001,
+      "title": "Ironclad Fury",
+      "overview": "An ex-special forces operative goes rogue to dismantle a weapons trafficking ring operating across three continents.",
+      "release_date": "2024-06-07",
+      "vote_average": 7.0,
+      "vote_count": 1543,
+      "popularity": 145.678,
+      "poster_path": "/ironcladFury.jpg",
+      "backdrop_path": "/ironcladFuryBack.jpg",
+      "genre_ids": [28, 53, 80],
+      "original_language": "en",
+      "adult": false,
+      "video": false,
+      "media_type": "movie"
+    },
+    {
+      "id": 200002,
+      "title": "Shadow Protocol",
+      "overview": "When a government black site is compromised, a team of elite agents must fight their way out before a kill order is executed.",
+      "release_date": "2024-05-23",
+      "vote_average": 6.8,
+      "vote_count": 2109,
+      "popularity": 122.341,
+      "poster_path": "/shadowProtocol.jpg",
+      "backdrop_path": "/shadowProtocolBack.jpg",
+      "genre_ids": [28, 12, 53],
+      "original_language": "en",
+      "adult": false,
+      "video": false,
+      "media_type": "movie"
+    },
+    {
+      "id": 200003,
+      "title": "Dragon's Wrath",
+      "overview": "A martial arts master travels across feudal China to avenge his fallen temple and confront the warlord who destroyed it.",
+      "release_date": "2024-04-18",
+      "vote_average": 7.5,
+      "vote_count": 1890,
+      "popularity": 98.456,
+      "poster_path": "/dragonsWrath.jpg",
+      "backdrop_path": "/dragonsWrathBack.jpg",
+      "genre_ids": [28, 36, 18],
+      "original_language": "zh",
+      "adult": false,
+      "video": false,
+      "media_type": "movie"
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 3
+}
