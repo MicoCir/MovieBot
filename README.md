@@ -53,6 +53,8 @@ Opciones:
 
 ### Captura de fixture TMDB
 
+La implementación actual consulta la ventana semanal (`week`). El endpoint de Trending Movies de TMDB solo admite las ventanas `day` y `week`; no existe una ventana nativa de un mes o de un año. Consulta la [documentación oficial de TMDB](https://developer.themoviedb.org/reference/trending-movies).
+
 Captura una snapshot inmutable del endpoint TMDB Trending Movies. Requiere `OPENAI_API_KEY`, `OPENAI_MODEL` y `TMDB_API_KEY` configuradas en `.env`, ya que `Settings()` valida su presencia al instanciarse:
 
 ```python
@@ -73,6 +75,8 @@ asyncio.run(main())
 Notas:
 - Si ya existe un fixture con la misma versión, la operación falla sin sobrescribir (conflicto).
 - La escritura es atómica: si falla, no quedan archivos parciales.
+
+Si en el futuro se necesitan tendencias mensuales o anuales, habrá que construirlas agregando snapshots diarios/semanales almacenados por la aplicación. Usar `discover/movie` con filtros de fecha sería una estrategia diferente, no equivalente a Trending.
 
 ## Tests
 

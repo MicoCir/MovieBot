@@ -628,15 +628,51 @@ Cuando una preferencia no pueda comprobarse con los datos disponibles:
 
 ---
 
+## 16.1 Ventana temporal de Trending
+
+El endpoint de Trending Movies de TMDB utiliza el parámetro `time_window` y actualmente solo admite dos valores:
+
+```text
+day
+week
+```
+
+La implementación inicial utilizará `week` por defecto.
+
+La ventana `day` solo se utilizará cuando el usuario especifique claramente una intención diaria, por ejemplo:
+
+```text
+"¿Qué películas son tendencia hoy?"
+"Dime las tendencias de hoy"
+"What's trending today?"
+```
+
+Expresiones como `trending`, `now`, `current`, `latest` o `recent`, sin una referencia explícita a “hoy”, no cambiarán la ventana por defecto: se resolverán con `week`.
+
+La API no ofrece ventanas nativas de un mes o de un año. Esas ventanas no se simularán cambiando silenciosamente de endpoint. Si se necesitan en el futuro, las alternativas serán:
+
+- almacenar snapshots diarios o semanales y calcular una agregación propia;
+- utilizar `discover/movie` con filtros temporales, documentando que se trata de popularidad/descubrimiento y no de Trending.
+
+La documentación oficial de TMDB define las ventanas permitidas en [Trending Movies](https://developer.themoviedb.org/reference/trending-movies).
+
+---
+
 # 17. Query schema TMDB
 
 ```python
+from typing import Literal
+
+
 class TrendingQuery(BaseModel):
     keywords: list[str] = []
     genres: list[str] = []
+    time_window: Literal["day", "week"] = "week"
     preferred_recency: bool = True
     min_rating: float | None = None
 ```
+
+En la implementación inicial del conector, la ventana queda fijada a `week`. La interpretación de `time_window` y la selección de `day` cuando el usuario diga claramente “hoy” forman parte de la evolución del agente y requerirán una tarea de implementación específica.
 
 Ejemplo:
 
@@ -650,6 +686,7 @@ Interpretación:
 {
   "keywords": ["superhero"],
   "genres": ["superhero"],
+  "time_window": "week",
   "preferred_recency": true,
   "min_rating": null
 }
@@ -1564,10 +1601,11 @@ Antes de comenzar la implementación se preparará una matriz pequeña de aproxi
 
 Ejemplo:
 
-| Query | Route | Expected behavior |
-|---|---|---|
-| "What's trending now?" | trending | query TMDB only |
-| "Any recent superhero movie?" | trending | query TMDB only |
+| Query | Route | TMDB window | Expected behavior |
+|---|---|---|---|
+| "What's trending now?" | trending | week | query TMDB only |
+| "What's trending today?" | trending | day | query TMDB only |
+| "Any recent superhero movie?" | trending | week | query TMDB only |
 | "Netflix nature documentaries" | netflix | query Netflix only |
 | "Find an action spy movie on Netflix" | netflix | filters + semantic retrieval |
 | "Recommend me a comedy" | both | query both sources |
