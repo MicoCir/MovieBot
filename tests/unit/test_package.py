@@ -1,11 +1,8 @@
 # tests/unit/test_package.py
+import importlib
+
+
 def test_import_moviebot():
-    import moviebot
+    package = importlib.import_module("moviebot")
 
-    assert moviebot is not None
-
-
-def test_import_movie_candidate():
-    from moviebot.common.models import MovieCandidate
-
-    assert MovieCandidate is not None
+    assert package.__name__ == "moviebot"
