@@ -40,3 +40,14 @@ Se implementaron tres componentes ortogonales: (1) conector HTTP mínimo contra 
 ### Resumen
 
 Se corrigieron dos inconsistencias semánticas detectadas en revisión: (1) el metadata del fixture declaraba `"parameters": {"language": "en-US"}` pero la petición HTTP solo envía `api_key` — se alineó metadata con la realidad (`"parameters": {}`) y se añadió un test que verifica coherencia entre query params enviados y metadata registrada; (2) las observaciones del informe listaban `description` como "campo confiable" pese a estar clasificado como "no fiable para filtros duros" — se modificó `_build_observations()` para derivar la lista de campos verificables desde `field_classifications`, eliminando la contradicción. Informe y metadata fixture regenerados. 171 tests pasando, quality gates completos en verde.
+
+---
+
+## Entrada 5
+
+**Sprint:** 2 — Silver Evaluation Dataset
+**Tarea:** Infraestructura de seeds estructurados
+
+### Resumen
+
+Se implementó el paquete `src/moviebot/evals/silver/` con cinco módulos: modelos Pydantic del seed estructurado (`models.py`) con discriminador explícito para round-trip JSON, adaptadores deterministas para Netflix CSV y fixture TMDB (`adapters.py`) con filtrado, builder programático (`builder.py`) con API discriminada por ruta y validaciones de consistencia, validador exhaustivo (`validator.py`) con 14 categorías de error que nunca lanza excepciones, y persistencia atómica (`persistence.py`) con staging+rename, protección contra sobreescritura y checksums SHA-256 por seed. Se escribieron 118 tests (40 modelos, 16 adaptadores, 18 builder, 26 validador, 17 persistencia, 1 integración) incluyendo 8 propiedades basadas en Hypothesis, implementadas mediante 10 tests property-based (determinismo, corrección de filtrado, round-trip, subset invariante, no-contaminación, determinismo de persistencia). Todos los tests corren con bloqueo de red autouse. No se introdujeron dependencias nuevas. Quality gates en verde: pytest (289 tests), ruff check, ruff format, mypy.

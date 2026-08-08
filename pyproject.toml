@@ -48,6 +48,12 @@ module = [
 ]
 disallow_untyped_defs = true
 
+[[tool.mypy.overrides]]
+module = [
+    "moviebot.evals.*",
+]
+disallow_untyped_defs = true
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

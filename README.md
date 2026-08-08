@@ -90,6 +90,12 @@ Los tests de integración se excluyen por defecto (configurado en `pyproject.tom
 uv run pytest -m integration
 ```
 
+Para ejecutar solo los tests del Silver Dataset (offline, sin credenciales):
+
+```bash
+uv run pytest tests/evals/silver/ -v
+```
+
 ## Lint
 
 ```bash
@@ -116,6 +122,8 @@ src/moviebot/
 ├── repositories/    # Conector TMDB, FixtureWriter, protocols
 ├── routing/         # Router de queries
 ├── agents/          # Agentes TMDB y Netflix
+├── evals/           # Evaluación offline
+│   └── silver/      # Silver Dataset: modelos, adaptadores, builder, validator, persistence
 ├── tools/           # Herramientas CLI (inspect_netflix)
 ├── app/             # Estado de la aplicación
 └── interface/       # API FastAPI
@@ -128,3 +136,14 @@ src/moviebot/
 | `raw_data/tmdb/trending_movies_v1.json` | Payload del fixture TMDB (respuesta real) |
 | `raw_data/tmdb/trending_movies_v1.metadata.json` | Metadatos de procedencia (checksum SHA-256, endpoint, timestamp UTC) |
 | `reports/netflix_inspection.json` | Reporte de inspección del dataset Netflix (determinista) |
+
+### Salida esperada (Silver Dataset)
+
+Los siguientes archivos se generarán cuando se construya físicamente el dataset usando la infraestructura de `moviebot.evals.silver`:
+
+| Archivo | Descripción |
+|---------|-------------|
+| `evals/datasets/silver_v1/seeds.jsonl` | Seeds estructurados del Silver Evaluation Dataset (JSONL) |
+| `evals/datasets/silver_v1/metadata.json` | Metadata del dataset (checksum, distribución por ruta, versión) |
+
+Ver [docs/02 - Guía Generación Silver Dataset.md](docs/02%20-%20Guía%20Generación%20Silver%20Dataset.md) para detalles del flujo de generación.
