@@ -4,27 +4,73 @@
 
 El Silver Evaluation Dataset es un conjunto de **seeds estructurados** que representan casos de evaluación para el sistema de recomendación de MovieBot. Cada seed define un escenario completo (ruta esperada, constraints, ítems de referencia, estado esperado) *antes* de la generación de la query en lenguaje natural.
 
-La generación es completamente **offline y determinista**: no requiere llamadas de red ni uso de LLMs. Opera exclusivamente sobre los datasources locales (Netflix CSV y fixture TMDB).
+La generación es completamente **offline y determinista**: no requiere llamadas de red ni uso de LLMs. Opera exclusivamente sobre los datasources locales (dataset canónico Netflix JSONL y fixture TMDB).
 
-> **Nota:** Esta guía documenta la **infraestructura programática** para construir seeds. La generación física de los ~150 casos del Silver Dataset se realizará en una fase posterior utilizando esta API. Lo que aquí se describe es el contrato, las validaciones y el flujo de persistencia.
+> **Nota:** Esta guía documenta la infraestructura programática para construir seeds. El pipeline está operativo: `BatchGenerator` lee un catálogo declarativo (`config/evals/silver_v1/case_catalog.json`) y produce los 150 seeds. Lo que se describe aquí es el contrato, las validaciones y el flujo de persistencia.
 
 ## Arquitectura del Sistema
 
 ```
-src/moviebot/evals/silver/
-├── models.py        → Modelos Pydantic (SilverSeed, constraints, componentes)
-├── adapters.py      → Adaptadores deterministas (Netflix CSV, fixture TMDB)
-├── builder.py       → API programática de construcción de seeds
-├── validator.py     → Validaciones de integridad exhaustivas
-└── persistence.py   → Serialización JSONL y escritura atómica
+src/moviebot/
+├── etl/                 → Pipeline ETL: CSVs crudos → dataset canónico (titles.jsonl + metadata.json)
+│   ├── netflix_etl.py       → Orquestador: lectura, normalización, join, validación, escritura atómica
+│   ├── transformers.py      → Funciones puras de normalización (tipos, géneros, nombres, scores)
+│   ├── quality_report.py    → Modelo del quality report (registros descartados, field nullifications)
+│   └── schema.py            → CanonicalNetflixTitle + EtlMetadata (contrato del JSONL)
+├── evals/silver/
+│   ├── models.py        → Modelos Pydantic (SilverSeed, constraints, componentes)
+│   ├── adapters.py      → CanonicalNetflixAdapter (lee JSONL canónico) + NetflixAdapter (legacy CSV) + TmdbAdapter
+│   ├── builder.py       → API programática de construcción de seeds (SeedBuilder)
+│   ├── batch_generator.py → BatchGenerator: orquesta generación de 150 seeds desde case_catalog.json
+│   ├── case_catalog.py  → Loader y validación del catálogo declarativo
+│   ├── validator.py     → Validaciones de integridad exhaustivas
+│   └── persistence.py   → Serialización JSONL y escritura atómica (SeedPersistence)
+├── indexer/
+│   ├── meilisearch_indexer.py → MeilisearchIndexer: ingesta dataset canónico en índice versionado
+│   └── index_metadata.py     → Modelo del registry de índices (index_registry.json)
+├── repositories/
+│   ├── protocols.py           → NetflixRepository protocol
+│   └── netflix_meilisearch.py → MeilisearchNetflixRepository: queries Meilisearch para el agente
+└── agents/netflix/
+    ├── models.py              → NetflixQuery (con actors/directors)
+    └── intent_extractor.py    → IntentExtractorProtocol + LlmIntentExtractor
 ```
 
-**Salida:** `evals/datasets/{version}/seeds.jsonl` + `metadata.json`
+**Salida ETL:** `data/processed/netflix/{version}/titles.jsonl` + `metadata.json` + `quality_report.json`
+
+**Salida Seeds:** `evals/datasets/{version}/seeds.jsonl` + `metadata.json`
+
+### Flujo de datos entre componentes
+
+```text
+CSVs crudos (titles.csv + credits.csv)
+    ↓
+NetflixEtl (src/moviebot/etl/)
+    ↓
+Dataset Canónico (titles.jsonl + metadata.json)
+    ↓                              ↓
+CanonicalNetflixAdapter      MeilisearchIndexer
+(ground truth exhaustivo)    (ingesta en índice runtime)
+    ↓                              ↓
+BatchGenerator               Meilisearch (netflix_{version})
+(case_catalog.json → seeds)        ↓
+    ↓                        MeilisearchNetflixRepository
+Silver Dataset               (NetflixQuery → búsqueda runtime)
+(seeds.jsonl)
+```
+
+- **ETL → Dataset Canónico:** normalización única en un solo punto (tipos, géneros, actores, directores)
+- **CanonicalNetflixAdapter:** consume el JSONL para computar `eligible_item_ids` (filtrado exhaustivo)
+- **MeilisearchIndexer:** consume el mismo JSONL para poblar el índice de búsqueda
+- **MeilisearchNetflixRepository:** consulta Meilisearch en runtime para el agente Netflix
+- **BatchGenerator:** lee el catálogo declarativo y produce los 150 seeds determinísticamente
 
 ## Prerequisitos
 
-1. Dataset Netflix disponible en `raw_data/netflix/titles.csv` (y opcionalmente `credits.csv` para filtros por actor/director)
-2. Fixture TMDB capturado en `raw_data/tmdb/trending_movies_v1.json` con su metadata de checksum
+1. **Dataset canónico generado:** Ejecutar el ETL (`python -m moviebot.etl.netflix_etl --version v1`) para producir `data/processed/netflix/v1/titles.jsonl` + `metadata.json` a partir de los CSVs crudos
+2. CSVs fuente disponibles en `raw_data/netflix/titles.csv` y `raw_data/netflix/credits.csv` (input del ETL)
+3. Fixture TMDB capturado en `raw_data/tmdb/trending_movies_v1.json` con su metadata de checksum
+4. **Para runtime:** Meilisearch corriendo localmente; ejecutar el indexer (`python -m moviebot.indexer.meilisearch_indexer --canonical-version v1`) para poblar el índice
 
 ## Conceptos Clave
 
@@ -33,7 +79,7 @@ src/moviebot/evals/silver/
 | Ruta | Descripción | Datasource | Constraint Type |
 |------|-------------|------------|-----------------|
 | `trending` | Películas en tendencia (TMDB) | Fixture TMDB | `TmdbHardConstraints` |
-| `netflix` | Catálogo Netflix | CSV Netflix | `NetflixHardConstraints` |
+| `netflix` | Catálogo Netflix | Dataset canónico (JSONL) | `NetflixHardConstraints` |
 | `both` | Ambas fuentes combinadas | Ambos | Componentes independientes |
 | `out_of_scope` | Fuera del dominio | Ninguno | Ninguno |
 
@@ -62,11 +108,13 @@ Conjunto exhaustivo de IDs que satisfacen TODOS los hard constraints de un seed.
 
 ```python
 from pathlib import Path
-from moviebot.evals.silver.adapters import NetflixAdapter, TmdbAdapter
+from moviebot.evals.silver.adapters import CanonicalNetflixAdapter, TmdbAdapter
 
-netflix = NetflixAdapter(
-    titles_path=Path("raw_data/netflix/titles.csv"),
-    credits_path=Path("raw_data/netflix/credits.csv"),
+# El CanonicalNetflixAdapter lee desde el dataset canónico producido por el ETL.
+# Valida checksums, versiones y consistencia con metadata.json automáticamente.
+netflix = CanonicalNetflixAdapter(
+    canonical_dataset_version="v1",
+    base_dir=Path("data/processed/netflix"),
 )
 
 tmdb = TmdbAdapter(
@@ -74,6 +122,8 @@ tmdb = TmdbAdapter(
     base_dir=Path("raw_data/tmdb"),
 )
 ```
+
+El `CanonicalNetflixAdapter` verifica al inicializarse que el SHA-256 del `titles.jsonl` coincide con el registrado en `metadata.json`, garantizando integridad del dataset canónico. Expone `etl_version`, `schema_version` y `canonical_dataset_version` para trazabilidad.
 
 El `TmdbAdapter` verifica automáticamente el checksum SHA-256 del fixture contra su metadata al cargarse.
 
@@ -86,7 +136,9 @@ builder = SeedBuilder(
     netflix_adapter=netflix,
     tmdb_adapter=tmdb,
     schema_version="1.0.0",
-    dataset_version="silver_v1",
+    silver_dataset_version="silver_v1",
+    canonical_dataset_version="v1",
+    etl_version="1.0.0",
 )
 ```
 
@@ -156,7 +208,7 @@ request = BothSeedBuildRequest(
     tmdb_seed_item_ids=["tmdb:969681"],  # Spider-Man (fixture TMDB)
     tmdb_hard_constraints=TmdbHardConstraints(genre_ids=[878], min_year=2026),
     tmdb_semantic_concepts=[],
-    netflix_seed_item_ids=["tm84618"],  # Taxi Driver (Netflix CSV)
+    netflix_seed_item_ids=["tm84618"],  # Taxi Driver (dataset canónico)
     netflix_hard_constraints=NetflixHardConstraints(
         type="movie",
         genres=["crime"],
@@ -216,12 +268,49 @@ persistence = SeedPersistence(
 )
 
 # seeds es una lista de SilverSeed construidos en el paso anterior
-result = persistence.persist(seeds, dataset_version="silver_v1")
+result = persistence.persist(seeds, silver_dataset_version="silver_v1")
 
 print(f"Seeds: {result.seeds_path}")
 print(f"Metadata: {result.metadata_path}")
 print(f"Total: {result.seed_count} seeds")
 print(f"Checksum: {result.checksum_sha256}")
+```
+
+### 5. Generación Batch (150 seeds desde catálogo declarativo)
+
+Para generar el batch completo de 150 seeds del Silver Dataset se usa el `BatchGenerator`:
+
+```python
+from pathlib import Path
+from moviebot.evals.silver.batch_generator import BatchGenerator, BatchGeneratorConfig
+
+config = BatchGeneratorConfig(
+    canonical_dataset_version="v1",
+    silver_dataset_version="silver_v1",
+    schema_version="1.0.0",
+    etl_version="1.0.0",
+    tmdb_fixture_version="v1",
+    case_catalog_path=Path("config/evals/silver_v1/case_catalog.json"),
+    output_base_dir=Path("evals/datasets"),
+)
+
+generator = BatchGenerator(
+    config=config,
+    netflix_adapter=netflix,
+    tmdb_adapter=tmdb,
+)
+
+result = generator.generate()
+print(f"Seeds generados: {result.seed_count}")
+print(f"Checksum: {result.checksum_sha256}")
+```
+
+O mediante CLI:
+
+```bash
+uv run python -m moviebot.evals.silver.batch_generator \
+    --canonical-version v1 \
+    --silver-version silver_v1
 ```
 
 ## Validaciones Automáticas
@@ -262,7 +351,7 @@ Una línea JSON por seed, ordenados por `case_id`. Serialización canónica: `so
 
 ```json
 {
-  "dataset_version": "silver_v1",
+  "silver_dataset_version": "silver_v1",
   "schema_version": "1.0.0",
   "created_at": "2024-01-15T10:30:00+00:00",
   "seed_count": 150,
@@ -272,7 +361,10 @@ Una línea JSON por seed, ordenados por `case_id`. Serialización canónica: `so
     "netflix": 50,
     "both": 25,
     "out_of_scope": 25
-  }
+  },
+  "canonical_dataset_version": "v1",
+  "canonical_dataset_checksum": "639ff997...",
+  "etl_version": "1.0.0"
 }
 ```
 

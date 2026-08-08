@@ -15,7 +15,11 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
-from moviebot.evals.silver.adapters import NetflixAdapter, TmdbAdapter
+from moviebot.evals.silver.adapters import (
+    CanonicalNetflixAdapter,
+    NetflixAdapter,
+    TmdbAdapter,
+)
 from moviebot.evals.silver.models import SilverSeed
 from moviebot.evals.silver.validator import SeedValidator
 
@@ -25,12 +29,15 @@ _SAFE_VERSION_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 class DatasetMetadata(BaseModel):
     """Metadata del dataset persistido."""
 
-    dataset_version: str
+    silver_dataset_version: str
     schema_version: str
     created_at: str  # ISO 8601 UTC timestamp
     seed_count: int
     checksum_sha256: str  # SHA-256 del archivo seeds.jsonl
     route_distribution: dict[str, int]  # e.g., {"trending": 5, "netflix": 3, ...}
+    canonical_dataset_version: str | None = None
+    canonical_dataset_checksum: str | None = None
+    etl_version: str | None = None
 
 
 @dataclass
@@ -54,7 +61,7 @@ class SeedPersistence:
         self,
         base_output_dir: Path,
         *,
-        netflix_adapter: NetflixAdapter | None = None,
+        netflix_adapter: NetflixAdapter | CanonicalNetflixAdapter | None = None,
         tmdb_adapter: TmdbAdapter | None = None,
         schema_version: str,
     ) -> None:
@@ -69,14 +76,14 @@ class SeedPersistence:
     def persist(
         self,
         seeds: list[SilverSeed],
-        dataset_version: str,
+        silver_dataset_version: str,
     ) -> PersistenceResult:
         """Persiste seeds validados a disco.
 
         Steps:
-        1. Validate dataset_version (safe path component)
+        1. Validate silver_dataset_version (safe path component)
         2. Verify seeds not empty
-        3. Verify provenance.schema_version and provenance.dataset_version match
+        3. Verify provenance.schema_version and provenance.silver_dataset_version match
         4. Create base_output_dir if needed
         5. Verify final directory doesn't exist (overwrite protection)
         6. Validate via SeedValidator.validate_batch()
@@ -86,14 +93,14 @@ class SeedPersistence:
         10. Return PersistenceResult
 
         Raises:
-            ValueError: dataset_version unsafe, seeds empty, provenance mismatch,
+            ValueError: silver_dataset_version unsafe, seeds empty, provenance mismatch,
                         validation errors
             FileExistsError: output directory already exists
         """
-        # 1. Validate dataset_version
-        if not _SAFE_VERSION_PATTERN.match(dataset_version):
+        # 1. Validate silver_dataset_version
+        if not _SAFE_VERSION_PATTERN.match(silver_dataset_version):
             raise ValueError(
-                f"dataset_version contiene caracteres inseguros: '{dataset_version}'"
+                f"silver_dataset_version contiene caracteres inseguros: '{silver_dataset_version}'"
             )
 
         # 2. Verify non-empty
@@ -108,22 +115,88 @@ class SeedPersistence:
                     f"'{seed.provenance.schema_version}' no coincide con "
                     f"schema_version del persister '{self._schema_version}'"
                 )
-            if seed.provenance.dataset_version != dataset_version:
+            if seed.provenance.silver_dataset_version != silver_dataset_version:
                 raise ValueError(
-                    f"Seed '{seed.case_id}': provenance.dataset_version "
-                    f"'{seed.provenance.dataset_version}' no coincide con "
-                    f"dataset_version '{dataset_version}'"
+                    f"Seed '{seed.case_id}': provenance.silver_dataset_version "
+                    f"'{seed.provenance.silver_dataset_version}' no coincide con "
+                    f"silver_dataset_version '{silver_dataset_version}'"
                 )
 
-        # 4. Create base_output_dir if needed
+        # 4. Batch-level validation: if any seed uses netflix/both,
+        # canonical_dataset_version, etl_version, and checksum must be available
+        has_netflix_source = any(
+            seed.provenance.source in ("netflix", "both") for seed in seeds
+        )
+        canonical_dataset_version: str | None = None
+        canonical_dataset_checksum: str | None = None
+        etl_version: str | None = None
+
+        if has_netflix_source:
+            # Extract from first netflix/both seed (all should be consistent)
+            for seed in seeds:
+                if seed.provenance.source in ("netflix", "both"):
+                    canonical_dataset_version = (
+                        seed.provenance.canonical_dataset_version
+                    )
+                    etl_version = seed.provenance.etl_version
+                    canonical_dataset_checksum = (
+                        seed.provenance.canonical_dataset_checksum
+                    )
+                    break
+
+            if canonical_dataset_version is None:
+                raise ValueError(
+                    "Batch contiene seeds con source netflix/both pero "
+                    "canonical_dataset_version no está definido en provenance"
+                )
+            if canonical_dataset_checksum is None:
+                raise ValueError(
+                    "Batch contiene seeds con source netflix/both pero "
+                    "canonical_dataset_checksum no está definido en provenance"
+                )
+            if etl_version is None:
+                raise ValueError(
+                    "Batch contiene seeds con source netflix/both pero "
+                    "etl_version no está definido en provenance"
+                )
+
+            # Verify all netflix/both seeds have uniform canonical fields
+            for seed in seeds:
+                if seed.provenance.source not in ("netflix", "both"):
+                    continue
+                if (
+                    seed.provenance.canonical_dataset_version
+                    != canonical_dataset_version
+                ):
+                    raise ValueError(
+                        f"Seed '{seed.case_id}': canonical_dataset_version "
+                        f"'{seed.provenance.canonical_dataset_version}' no coincide "
+                        f"con el valor del lote '{canonical_dataset_version}'"
+                    )
+                if (
+                    seed.provenance.canonical_dataset_checksum
+                    != canonical_dataset_checksum
+                ):
+                    raise ValueError(
+                        f"Seed '{seed.case_id}': canonical_dataset_checksum "
+                        f"no coincide con el valor del lote"
+                    )
+                if seed.provenance.etl_version != etl_version:
+                    raise ValueError(
+                        f"Seed '{seed.case_id}': etl_version "
+                        f"'{seed.provenance.etl_version}' no coincide "
+                        f"con el valor del lote '{etl_version}'"
+                    )
+
+        # 5. Create base_output_dir if needed
         self._base_output_dir.mkdir(parents=True, exist_ok=True)
 
-        # 5. Check final directory doesn't exist
-        final_dir = self._base_output_dir / dataset_version
+        # 6. Check final directory doesn't exist
+        final_dir = self._base_output_dir / silver_dataset_version
         if final_dir.exists():
             raise FileExistsError(f"Directorio de salida ya existe: {final_dir}")
 
-        # 6. Validate batch
+        # 7. Validate batch
         result = self._validator.validate_batch(seeds)
         if not result.is_valid:
             error_msgs = "; ".join(
@@ -132,10 +205,10 @@ class SeedPersistence:
             )
             raise ValueError(f"Validación del lote falló: {error_msgs}")
 
-        # 7. Sort by case_id
+        # 8. Sort by case_id
         sorted_seeds = sorted(seeds, key=lambda s: s.case_id)
 
-        # 8. Compute per-seed checksum (on COPIES, don't mutate originals)
+        # 9. Compute per-seed checksum (on COPIES, don't mutate originals)
         seeds_with_checksum: list[SilverSeed] = []
         for seed in sorted_seeds:
             checksum = self._compute_seed_checksum(seed)
@@ -144,9 +217,14 @@ class SeedPersistence:
             seed_data["provenance"]["checksum_sha256"] = checksum
             seeds_with_checksum.append(SilverSeed.model_validate(seed_data))
 
-        # 9. Atomic publish
+        # 10. Atomic publish
         return self._atomic_publish_directory(
-            seeds_with_checksum, dataset_version, final_dir
+            seeds_with_checksum,
+            silver_dataset_version,
+            final_dir,
+            canonical_dataset_version=canonical_dataset_version,
+            canonical_dataset_checksum=canonical_dataset_checksum,
+            etl_version=etl_version,
         )
 
     def _compute_seed_checksum(self, seed: SilverSeed) -> str:
@@ -168,6 +246,10 @@ class SeedPersistence:
         seeds: list[SilverSeed],
         dataset_version: str,
         final_dir: Path,
+        *,
+        canonical_dataset_version: str | None = None,
+        canonical_dataset_checksum: str | None = None,
+        etl_version: str | None = None,
     ) -> PersistenceResult:
         """Write seeds atomically: staging → rename.
 
@@ -211,12 +293,15 @@ class SeedPersistence:
 
             # Write metadata.json
             metadata = DatasetMetadata(
-                dataset_version=dataset_version,
+                silver_dataset_version=dataset_version,
                 schema_version=self._schema_version,
                 created_at=datetime.now(UTC).isoformat(),
                 seed_count=len(seeds),
                 checksum_sha256=file_checksum,
                 route_distribution=route_distribution,
+                canonical_dataset_version=canonical_dataset_version,
+                canonical_dataset_checksum=canonical_dataset_checksum,
+                etl_version=etl_version,
             )
             metadata_path = staging_dir / "metadata.json"
             metadata_path.write_text(

@@ -1573,6 +1573,37 @@ sortable attributes
 semantic/vectorized fields
 ```
 
+## 44.1 Pipeline ETL y componentes de datos (implementación)
+
+La preparación del dataset Netflix se materializa en un **módulo ETL** (`src/moviebot/etl/`) que transforma los CSVs crudos (`titles.csv`, `credits.csv`) en un **dataset canónico** versionado (`data/processed/netflix/{version}/titles.jsonl` + `metadata.json`). Este artefacto canónico es la fuente única de verdad para todo el sistema.
+
+**Componentes principales y responsabilidades:**
+
+| Componente | Ubicación | Responsabilidad |
+|------------|-----------|-----------------|
+| `NetflixEtl` | `src/moviebot/etl/netflix_etl.py` | Orquesta el pipeline ETL: lectura de CSVs, normalización, join de créditos, deduplicación, validación y escritura atómica del dataset canónico. |
+| `CanonicalNetflixAdapter` | `src/moviebot/evals/silver/adapters.py` | Carga el dataset canónico (JSONL) para computar ground truth exhaustivo (filtrado por type, genres, year, actors, directors). Alimenta al `SeedBuilder` para generar seeds del Silver Dataset. |
+| `MeilisearchIndexer` | `src/moviebot/indexer/meilisearch_indexer.py` | Ingesta el dataset canónico en un índice Meilisearch versionado e inmutable (`netflix_{version}`). Configura searchable/filterable attributes y valida integridad post-ingesta. |
+| `MeilisearchNetflixRepository` | `src/moviebot/repositories/netflix_meilisearch.py` | Implementa `NetflixRepository` traduciendo `NetflixQuery` a búsquedas Meilisearch. Soporta filtros de genres (AND), actors (OR), directors (OR), age_certification (OR). |
+| `BatchGenerator` | `src/moviebot/evals/silver/batch_generator.py` | Orquesta la generación de los 150 seeds del Silver Dataset a partir de un catálogo declarativo (`config/evals/silver_v1/case_catalog.json`), validando distribución, cuotas y existencia de IDs. |
+
+**Relaciones entre componentes:**
+
+```text
+CSVs crudos
+    ↓
+NetflixEtl → Dataset Canónico (titles.jsonl + metadata.json)
+    ↓                              ↓
+CanonicalNetflixAdapter      MeilisearchIndexer
+    ↓                              ↓
+BatchGenerator              Meilisearch (índice runtime)
+    ↓                              ↓
+Silver Dataset              MeilisearchNetflixRepository
+(seeds.jsonl)               (queries del agente Netflix)
+```
+
+La separación garantiza que ground truth (vía Adapter) y retrieval (vía Meilisearch) operan sobre los mismos datos canónicos pero con responsabilidades distintas: el Adapter itera exhaustivamente para evaluación, el Repository delega búsqueda al motor para runtime.
+
 ---
 
 # 45. Preparación de fixtures TMDB

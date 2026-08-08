@@ -55,14 +55,14 @@ def builder(netflix_adapter, tmdb_adapter):
         netflix_adapter=netflix_adapter,
         tmdb_adapter=tmdb_adapter,
         schema_version="1.0.0",
-        dataset_version="test_v1",
+        silver_dataset_version="test_v1",
     )
 
 
 def _make_out_of_scope_seed(
     case_id: str,
     schema_version: str = "1.0.0",
-    dataset_version: str = "test_v1",
+    silver_dataset_version: str = "test_v1",
 ) -> SilverSeed:
     """Create a minimal out_of_scope seed for testing."""
     return SilverSeed(
@@ -80,7 +80,7 @@ def _make_out_of_scope_seed(
             source="synthetic",
             input_data_description="test seed",
             schema_version=schema_version,
-            dataset_version=dataset_version,
+            silver_dataset_version=silver_dataset_version,
         ),
         fixture_version=None,
         tmdb_component=None,
@@ -495,3 +495,98 @@ class TestPersistenceSeedsNotMutated:
                 f"Seed '{seed.case_id}' was mutated: "
                 f"checksum_sha256={seed.provenance.checksum_sha256}"
             )
+
+
+# ===========================================================================
+# Test: canonical_dataset_checksum in metadata.json
+# ===========================================================================
+
+
+class TestCanonicalDatasetChecksumInMetadata:
+    """Verify that metadata.json correctly contains canonical_dataset_checksum.
+
+    Ensures the checksum stored in DatasetMetadata comes from the adapter's
+    canonical_dataset_checksum field (not the per-seed integrity checksum).
+    """
+
+    def test_metadata_contains_correct_canonical_checksum(self, tmp_path: Path) -> None:
+        """canonical_dataset_checksum in metadata matches provenance field."""
+        from moviebot.evals.silver.models import NetflixHardConstraints
+
+        schema_version = "1.0.0"
+        dataset_version = "test_v1"
+        expected_checksum = "f" * 64
+
+        # Create a netflix seed with canonical_dataset_checksum set
+        seed = SilverSeed(
+            case_id="checksum-meta-test",
+            expected_route="netflix",
+            expected_sources=["netflix"],
+            expected_status="SUCCESS",
+            hard_constraints=NetflixHardConstraints(type="movie"),
+            semantic_concepts=[],
+            seed_item_ids=["tm84618"],
+            eligible_item_ids=["tm84618"],
+            difficulty="easy",
+            tags=[],
+            provenance=SeedProvenance(
+                source="netflix",
+                input_data_description="Test canonical checksum propagation",
+                schema_version=schema_version,
+                silver_dataset_version=dataset_version,
+                canonical_dataset_version="v1",
+                canonical_dataset_checksum=expected_checksum,
+                etl_version="1.0.0",
+            ),
+        )
+
+        valid_result = ValidationResult(is_valid=True, errors=[])
+
+        with (
+            patch.object(SeedValidator, "validate_batch", return_value=valid_result),
+            patch("os.fsync", _noop_fsync),
+            patch("os.open", return_value=0),
+            patch("os.close"),
+        ):
+            persistence = SeedPersistence(
+                base_output_dir=tmp_path,
+                schema_version=schema_version,
+            )
+            result = persistence.persist([seed], dataset_version)
+
+        metadata = json.loads(result.metadata_path.read_text(encoding="utf-8"))
+
+        assert metadata["canonical_dataset_checksum"] == expected_checksum
+        assert metadata["canonical_dataset_version"] == "v1"
+        assert metadata["etl_version"] == "1.0.0"
+
+    def test_metadata_canonical_checksum_none_without_netflix_seeds(
+        self, tmp_path: Path
+    ) -> None:
+        """When batch has no netflix/both seeds, canonical fields are None."""
+        schema_version = "1.0.0"
+        dataset_version = "test_v1"
+
+        seed = _make_out_of_scope_seed(
+            "oos-no-canonical", schema_version, dataset_version
+        )
+
+        valid_result = ValidationResult(is_valid=True, errors=[])
+
+        with (
+            patch.object(SeedValidator, "validate_batch", return_value=valid_result),
+            patch("os.fsync", _noop_fsync),
+            patch("os.open", return_value=0),
+            patch("os.close"),
+        ):
+            persistence = SeedPersistence(
+                base_output_dir=tmp_path,
+                schema_version=schema_version,
+            )
+            result = persistence.persist([seed], dataset_version)
+
+        metadata = json.loads(result.metadata_path.read_text(encoding="utf-8"))
+
+        assert metadata["canonical_dataset_checksum"] is None
+        assert metadata["canonical_dataset_version"] is None
+        assert metadata["etl_version"] is None

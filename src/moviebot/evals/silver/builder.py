@@ -5,7 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from moviebot.evals.silver.adapters import NetflixAdapter, TmdbAdapter
+from moviebot.evals.silver.adapters import (
+    CanonicalNetflixAdapter,
+    NetflixAdapter,
+    TmdbAdapter,
+)
 from moviebot.evals.silver.models import (
     NetflixHardConstraints,
     NetflixSeedComponent,
@@ -91,24 +95,42 @@ class SeedBuilder:
 
     def __init__(
         self,
-        netflix_adapter: NetflixAdapter | None = None,
+        netflix_adapter: NetflixAdapter | CanonicalNetflixAdapter | None = None,
         tmdb_adapter: TmdbAdapter | None = None,
         *,
         schema_version: str,
-        dataset_version: str,
+        silver_dataset_version: str,
+        canonical_dataset_version: str | None = None,
+        etl_version: str | None = None,
     ) -> None:
         """Configura adaptadores y versiones.
 
         Args:
-            netflix_adapter: Adaptador Netflix (requerido para routes netflix/both)
+            netflix_adapter: Adaptador Netflix (requerido para routes netflix/both).
+                Acepta tanto NetflixAdapter (CSV) como CanonicalNetflixAdapter (JSONL).
             tmdb_adapter: Adaptador TMDB (requerido para routes trending/both)
             schema_version: Versión del schema de seeds (e.g. "1.0.0")
-            dataset_version: Versión del dataset (e.g. "silver_v1")
+            silver_dataset_version: Versión del dataset (e.g. "silver_v1")
+            canonical_dataset_version: Versión del dataset canónico (requerido para netflix/both)
+            etl_version: Versión del ETL (requerido para netflix/both)
         """
         self._netflix = netflix_adapter
         self._tmdb = tmdb_adapter
         self._schema_version = schema_version
-        self._dataset_version = dataset_version
+        self._silver_dataset_version = silver_dataset_version
+        # When using CanonicalNetflixAdapter, prefer its metadata over constructor args
+        if hasattr(netflix_adapter, "canonical_dataset_version"):
+            self._canonical_dataset_version = (
+                canonical_dataset_version or netflix_adapter.canonical_dataset_version  # type: ignore[union-attr]
+            )
+        else:
+            self._canonical_dataset_version = canonical_dataset_version
+        if hasattr(netflix_adapter, "etl_version"):
+            self._etl_version = (
+                etl_version or netflix_adapter.etl_version  # type: ignore[union-attr]
+            )
+        else:
+            self._etl_version = etl_version
 
     def build(self, request: SeedBuildRequest) -> SilverSeed:
         """Construye un SilverSeed a partir del request. Dispatch por tipo."""
@@ -129,12 +151,12 @@ class SeedBuilder:
     def _compute_eligible(
         self,
         constraints: TmdbHardConstraints | NetflixHardConstraints,
-        adapter: NetflixAdapter | TmdbAdapter,
+        adapter: NetflixAdapter | CanonicalNetflixAdapter | TmdbAdapter,
     ) -> list[str] | None:
         """Calcula eligible_item_ids. Retorna None si constraints es default.
 
         El caller garantiza que constraints y adapter son del mismo tipo
-        (TmdbHardConstraints + TmdbAdapter, o NetflixHardConstraints + NetflixAdapter).
+        (TmdbHardConstraints + TmdbAdapter, o NetflixHardConstraints + NetflixAdapter/CanonicalNetflixAdapter).
         """
         if constraints.is_default():
             return None
@@ -198,6 +220,11 @@ class SeedBuilder:
             eligible = []
 
         # 5. Construir SilverSeed
+        # Extraer checksum del adaptador canónico si disponible (duck typing)
+        canonical_checksum: str | None = None
+        if hasattr(self._netflix, "output_checksum_sha256"):
+            canonical_checksum = self._netflix.output_checksum_sha256  # type: ignore[union-attr]
+
         return SilverSeed(
             case_id=request.case_id,
             expected_route="netflix",
@@ -217,7 +244,10 @@ class SeedBuilder:
                     f"dataset Netflix con {len(request.seed_item_ids)} seed items"
                 ),
                 schema_version=self._schema_version,
-                dataset_version=self._dataset_version,
+                silver_dataset_version=self._silver_dataset_version,
+                canonical_dataset_version=self._canonical_dataset_version,
+                canonical_dataset_checksum=canonical_checksum,
+                etl_version=self._etl_version,
             ),
         )
 
@@ -300,7 +330,7 @@ class SeedBuilder:
                     f"{len(request.seed_item_ids)} seed items"
                 ),
                 schema_version=self._schema_version,
-                dataset_version=self._dataset_version,
+                silver_dataset_version=self._silver_dataset_version,
             ),
         )
 
@@ -440,6 +470,11 @@ class SeedBuilder:
         )
 
         # 9. Construir SilverSeed con campos top-level en default/None
+        # Extraer checksum del adaptador canónico si disponible (duck typing)
+        canonical_checksum: str | None = None
+        if hasattr(self._netflix, "output_checksum_sha256"):
+            canonical_checksum = self._netflix.output_checksum_sha256  # type: ignore[union-attr]
+
         return SilverSeed(
             case_id=request.case_id,
             expected_route="both",
@@ -464,7 +499,10 @@ class SeedBuilder:
                     f"{len(request.netflix_seed_item_ids)} Netflix items"
                 ),
                 schema_version=self._schema_version,
-                dataset_version=self._dataset_version,
+                silver_dataset_version=self._silver_dataset_version,
+                canonical_dataset_version=self._canonical_dataset_version,
+                canonical_dataset_checksum=canonical_checksum,
+                etl_version=self._etl_version,
             ),
         )
 
@@ -486,6 +524,6 @@ class SeedBuilder:
                 fixture_version=None,
                 input_data_description="Seed out_of_scope generado para evaluación",
                 schema_version=self._schema_version,
-                dataset_version=self._dataset_version,
+                silver_dataset_version=self._silver_dataset_version,
             ),
         )

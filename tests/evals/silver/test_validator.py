@@ -45,7 +45,8 @@ def _base_provenance(**overrides: Any) -> SeedProvenance:
         "fixture_version": "v1",
         "input_data_description": "test data",
         "schema_version": "1.0.0",
-        "dataset_version": "silver_v1",
+        "silver_dataset_version": "silver_v1",
+        "canonical_dataset_version": "v1",
     }
     defaults.update(overrides)
     return SeedProvenance(**defaults)

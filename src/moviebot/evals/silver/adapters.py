@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from moviebot.etl.schema import CanonicalNetflixTitle, EtlMetadata
 from moviebot.evals.silver.models import (
     NetflixHardConstraints,
     TmdbHardConstraints,
@@ -512,3 +513,211 @@ class TmdbAdapter:
             result.append(record.id)
 
         return sorted(result)
+
+
+# ---------------------------------------------------------------------------
+# Canonical Netflix Adapter
+# ---------------------------------------------------------------------------
+
+
+class CanonicalNetflixAdapter:
+    """Adaptador que lee el dataset canónico JSONL como fuente de datos.
+
+    Reemplaza al NetflixAdapter basado en CSV. Lee desde el JSONL canónico
+    producido por el ETL pipeline.
+    """
+
+    def __init__(
+        self,
+        canonical_dataset_version: str,
+        base_dir: Path = Path("data/processed/netflix"),
+    ) -> None:
+        """Carga titles.jsonl y valida metadata.
+
+        Validations:
+        - titles.jsonl exists and is non-empty
+        - metadata.json exists and is parseable
+        - metadata.canonical_dataset_version matches the version passed to constructor
+        - Computed SHA-256 of titles.jsonl matches output_checksum_sha256 in metadata.json
+        - metadata.document_count matches the actual number of documents loaded
+
+        Raises:
+            FileNotFoundError: si titles.jsonl o metadata.json no existen
+            ValueError: si dataset está vacío, metadata inconsistente, o checksum mismatch
+        """
+        self._canonical_dataset_version = canonical_dataset_version
+        version_dir = base_dir / canonical_dataset_version
+        titles_path = version_dir / "titles.jsonl"
+        metadata_path = version_dir / "metadata.json"
+
+        if not titles_path.is_file():
+            raise FileNotFoundError(
+                f"Archivo titles.jsonl no encontrado: {titles_path} "
+                f"(canonical_dataset_version: {canonical_dataset_version})"
+            )
+        if not metadata_path.is_file():
+            raise FileNotFoundError(
+                f"Archivo metadata.json no encontrado: {metadata_path} "
+                f"(canonical_dataset_version: {canonical_dataset_version})"
+            )
+
+        # Load and validate metadata
+        metadata_text = metadata_path.read_text(encoding="utf-8")
+        metadata = EtlMetadata.model_validate_json(metadata_text)
+
+        if metadata.canonical_dataset_version != canonical_dataset_version:
+            raise ValueError(
+                f"Version mismatch: constructor recibió '{canonical_dataset_version}' "
+                f"pero metadata.json contiene '{metadata.canonical_dataset_version}'"
+            )
+
+        # Read titles.jsonl raw bytes for checksum verification
+        titles_raw = titles_path.read_bytes()
+        computed_checksum = hashlib.sha256(titles_raw).hexdigest()
+
+        if computed_checksum != metadata.output_checksum_sha256:
+            raise ValueError(
+                f"Checksum mismatch para titles.jsonl: "
+                f"esperado {metadata.output_checksum_sha256}, "
+                f"calculado {computed_checksum} "
+                f"(canonical_dataset_version: {canonical_dataset_version})"
+            )
+
+        # Parse titles line-by-line
+        titles_text = titles_raw.decode("utf-8")
+        self._titles: list[CanonicalNetflixTitle] = []
+        for line in titles_text.splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            self._titles.append(CanonicalNetflixTitle.model_validate_json(stripped))
+
+        if not self._titles:
+            raise ValueError(
+                f"Dataset canónico está vacío para "
+                f"canonical_dataset_version: {canonical_dataset_version}"
+            )
+
+        # Validate document count matches metadata
+        if metadata.document_count != len(self._titles):
+            raise ValueError(
+                f"Document count mismatch: metadata indica {metadata.document_count} "
+                f"documentos pero se cargaron {len(self._titles)} "
+                f"(canonical_dataset_version: {canonical_dataset_version})"
+            )
+
+        self._titles_by_id: dict[str, CanonicalNetflixTitle] = {
+            t.id: t for t in self._titles
+        }
+        self._output_checksum_sha256 = computed_checksum
+        self._etl_version = metadata.etl_version
+        self._schema_version = metadata.schema_version
+
+    @property
+    def canonical_dataset_version(self) -> str:
+        """Retorna la versión del dataset canónico cargado."""
+        return self._canonical_dataset_version
+
+    @property
+    def output_checksum_sha256(self) -> str:
+        """Retorna el checksum SHA-256 del archivo titles.jsonl."""
+        return self._output_checksum_sha256
+
+    @property
+    def etl_version(self) -> str:
+        """Retorna la versión del ETL que produjo el dataset."""
+        return self._etl_version
+
+    @property
+    def schema_version(self) -> str:
+        """Retorna la versión del schema canónico."""
+        return self._schema_version
+
+    def id_exists(self, item_id: str) -> bool:
+        """Verifica existencia de un ID en el dataset canónico."""
+        return item_id in self._titles_by_id
+
+    def get_title(self, item_id: str) -> CanonicalNetflixTitle | None:
+        """Retorna el título por ID o None si no existe."""
+        return self._titles_by_id.get(item_id)
+
+    def get_description(self, item_id: str) -> str | None:
+        """Retorna el campo description del título."""
+        title = self._titles_by_id.get(item_id)
+        return title.description if title else None
+
+    def get_actors_for_title(self, item_id: str) -> list[str]:
+        """Retorna actores asociados al título."""
+        title = self._titles_by_id.get(item_id)
+        return title.actors if title else []
+
+    def get_directors_for_title(self, item_id: str) -> list[str]:
+        """Retorna directores asociados al título."""
+        title = self._titles_by_id.get(item_id)
+        return title.directors if title else []
+
+    def filter(self, constraints: NetflixHardConstraints) -> list[str] | None:
+        """Filtrado exhaustivo. Retorna IDs en orden léxico-ascendente.
+
+        Si constraints.is_default() → retorna None (no eligible_item_ids).
+
+        Semántica de filtros:
+        - genres: AND (documento debe contener TODOS los géneros)
+        - actors: OR (documento debe contener al menos UN actor)
+        - directors: OR (documento debe contener al menos UN director)
+        - type: exact match ("movie"/"show"), None = sin filtro
+        - min_year/max_year: filtro de rango
+
+        Returns:
+            Lista de IDs en orden léxico-ascendente, o None si is_default().
+        """
+        if constraints.is_default():
+            return None
+
+        # Normalizar filtros para comparación
+        filter_genres: set[str] = {g.lower() for g in constraints.genres}
+        filter_actors: set[str] = {a.lower() for a in constraints.actors}
+        filter_directors: set[str] = {d.lower() for d in constraints.directors}
+
+        result_ids: list[str] = []
+
+        for title in self._titles:
+            # Filtro por type
+            if constraints.type is not None and title.type != constraints.type:
+                continue
+
+            # Filtro por genres (AND: título debe tener TODOS los géneros)
+            if filter_genres:
+                title_genres_lower = {g.lower() for g in title.genres}
+                if not filter_genres.issubset(title_genres_lower):
+                    continue
+
+            # Filtro por min_year
+            if (
+                constraints.min_year is not None
+                and title.release_year < constraints.min_year
+            ):
+                continue
+
+            # Filtro por max_year
+            if (
+                constraints.max_year is not None
+                and title.release_year > constraints.max_year
+            ):
+                continue
+
+            # Filtro por actors (OR: al menos uno debe coincidir)
+            if filter_actors:
+                title_actors_lower = {a.lower() for a in title.actors}
+                if not filter_actors.intersection(title_actors_lower):
+                    continue
+
+            # Filtro por directors (OR: al menos uno debe coincidir)
+            if filter_directors:
+                title_directors_lower = {d.lower() for d in title.directors}
+                if not filter_directors.intersection(title_directors_lower):
+                    continue
+
+            result_ids.append(title.id)
+
+        return sorted(result_ids)

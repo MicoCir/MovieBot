@@ -251,28 +251,30 @@ def valid_silver_seed(draw: st.DrawFn) -> SilverSeed:
     difficulty = draw(_DIFFICULTY)
     tags = draw(st.lists(_TAG, min_size=0, max_size=5, unique=True))
     schema_version = draw(_SEMVER)
-    dataset_version = draw(_DATASET_VERSION)
+    silver_dataset_version = draw(_DATASET_VERSION)
 
     if route == "trending":
         return draw(
             _build_trending_seed(
-                case_id, difficulty, tags, schema_version, dataset_version
+                case_id, difficulty, tags, schema_version, silver_dataset_version
             )
         )
     elif route == "netflix":
         return draw(
             _build_netflix_seed(
-                case_id, difficulty, tags, schema_version, dataset_version
+                case_id, difficulty, tags, schema_version, silver_dataset_version
             )
         )
     elif route == "both":
         return draw(
-            _build_both_seed(case_id, difficulty, tags, schema_version, dataset_version)
+            _build_both_seed(
+                case_id, difficulty, tags, schema_version, silver_dataset_version
+            )
         )
     else:  # out_of_scope
         return draw(
             _build_out_of_scope_seed(
-                case_id, difficulty, tags, schema_version, dataset_version
+                case_id, difficulty, tags, schema_version, silver_dataset_version
             )
         )
 
@@ -284,7 +286,7 @@ def _build_trending_seed(
     difficulty: str,
     tags: list[str],
     schema_version: str,
-    dataset_version: str,
+    silver_dataset_version: str,
 ) -> SilverSeed:
     """Build a valid trending route seed."""
     status = draw(st.sampled_from(["SUCCESS", "NO_RESULTS"]))
@@ -325,7 +327,7 @@ def _build_trending_seed(
         fixture_version=fixture_version,
         input_data_description="test fixture data",
         schema_version=schema_version,
-        dataset_version=dataset_version,
+        silver_dataset_version=silver_dataset_version,
     )
 
     return SilverSeed(
@@ -351,7 +353,7 @@ def _build_netflix_seed(
     difficulty: str,
     tags: list[str],
     schema_version: str,
-    dataset_version: str,
+    silver_dataset_version: str,
 ) -> SilverSeed:
     """Build a valid netflix route seed."""
     status = draw(st.sampled_from(["SUCCESS", "NO_RESULTS"]))
@@ -387,7 +389,8 @@ def _build_netflix_seed(
         source="netflix",
         input_data_description="test netflix data",
         schema_version=schema_version,
-        dataset_version=dataset_version,
+        silver_dataset_version=silver_dataset_version,
+        canonical_dataset_version=silver_dataset_version,
     )
 
     return SilverSeed(
@@ -413,7 +416,7 @@ def _build_both_seed(
     difficulty: str,
     tags: list[str],
     schema_version: str,
-    dataset_version: str,
+    silver_dataset_version: str,
 ) -> SilverSeed:
     """Build a valid 'both' route seed.
 
@@ -483,7 +486,8 @@ def _build_both_seed(
         fixture_version=fixture_version,
         input_data_description="test combined data",
         schema_version=schema_version,
-        dataset_version=dataset_version,
+        silver_dataset_version=silver_dataset_version,
+        canonical_dataset_version=silver_dataset_version,
     )
 
     return SilverSeed(
@@ -509,14 +513,14 @@ def _build_out_of_scope_seed(
     difficulty: str,
     tags: list[str],
     schema_version: str,
-    dataset_version: str,
+    silver_dataset_version: str,
 ) -> st.SearchStrategy[SilverSeed]:
     """Build a valid 'out_of_scope' route seed."""
     provenance = SeedProvenance(
         source="synthetic",
         input_data_description="out of scope test seed",
         schema_version=schema_version,
-        dataset_version=dataset_version,
+        silver_dataset_version=silver_dataset_version,
     )
 
     return st.just(

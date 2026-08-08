@@ -102,8 +102,26 @@ class SeedProvenance(BaseModel):
     fixture_version: str | None = None
     input_data_description: str = Field(max_length=500)
     schema_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
-    dataset_version: str = Field(pattern=r"^[a-zA-Z0-9_-]+$")
+    silver_dataset_version: str = Field(pattern=r"^[a-zA-Z0-9_-]+$")
+    canonical_dataset_version: str | None = None
+    canonical_dataset_checksum: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    etl_version: str | None = Field(default=None, pattern=r"^\d+\.\d+\.\d+$")
     checksum_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_canonical_for_netflix_sources(self) -> SeedProvenance:
+        """Enforce canonical_dataset_version is set for netflix/both sources."""
+        if (
+            self.source in ("netflix", "both")
+            and self.canonical_dataset_version is None
+        ):
+            raise ValueError(
+                "canonical_dataset_version es requerido cuando source es "
+                f"'{self.source}'"
+            )
+        return self
 
 
 class TmdbSeedComponent(BaseModel):

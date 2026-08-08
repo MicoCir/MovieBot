@@ -1723,7 +1723,34 @@ El proceso completo queda conceptualmente definido como:
 
 ---
 
-# 49. Resultado final
+# 49. Infraestructura de datos para generación del Silver Dataset
+
+El flujo de generación descrito en la sección 48 se apoya en una infraestructura concreta de datos implementada en el proyecto:
+
+**Pipeline ETL (`src/moviebot/etl/`):**
+El módulo ETL transforma los CSVs crudos de Netflix (`titles.csv`, `credits.csv`) en un dataset canónico versionado (`data/processed/netflix/{version}/titles.jsonl` + `metadata.json`). Este proceso normaliza tipos, géneros, nombres de actores/directores, realiza joins de créditos, deduplica y valida registros. El resultado es un artefacto determinista y reproducible.
+
+**`CanonicalNetflixAdapter` (`src/moviebot/evals/silver/adapters.py`):**
+Reemplaza al adaptador basado en CSV para la generación de seeds. Lee desde el dataset canónico producido por el ETL y provee filtrado exhaustivo para computar ground truth (`eligible_item_ids`). Soporta filtros por type, genres, year range, actors y directors. Toda la normalización ya fue resuelta por el ETL — el adapter simplemente consume el JSONL canónico.
+
+**`MeilisearchIndexer` (`src/moviebot/indexer/meilisearch_indexer.py`):**
+Ingesta el mismo dataset canónico en un índice Meilisearch versionado (`netflix_{version}`) para el retrieval runtime del agente Netflix. Configura actors y directors como filtrables y searchables.
+
+**`MeilisearchNetflixRepository` (`src/moviebot/repositories/netflix_meilisearch.py`):**
+Implementación concreta de `NetflixRepository` que traduce `NetflixQuery` a búsquedas Meilisearch. Soporta filtros de genres (AND semántica), actors (OR), directors (OR). Es el componente que el agente Netflix usa en runtime.
+
+**`BatchGenerator` (`src/moviebot/evals/silver/batch_generator.py`):**
+Orquesta la generación determinista de los 150 seeds. Lee un catálogo declarativo (`config/evals/silver_v1/case_catalog.json`), valida distribución (50/50/25/25), cuotas de NO_RESULTS, y existencia de todos los IDs referenciados. Delega la construcción individual a `SeedBuilder` y la persistencia a `SeedPersistence`.
+
+**Relación con la separación Ground Truth vs Retrieval (sección 23):**
+- Ground truth → `CanonicalNetflixAdapter.filter()` (iteración exhaustiva sobre JSONL)
+- Retrieval → `MeilisearchNetflixRepository.search()` (consulta al motor de búsqueda)
+
+Ambos operan sobre el mismo dataset canónico pero con propósitos distintos, manteniendo la independencia entre evaluación y runtime definida en las decisiones D-09 y D-23.
+
+---
+
+# 50. Resultado final
 
 El Silver Evaluation Dataset se diseñará alrededor de una idea central:
 

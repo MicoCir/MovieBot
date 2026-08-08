@@ -1,6 +1,6 @@
 """Tests unitarios para los modelos Pydantic del Silver Evaluation Dataset.
 
-Valida: Requisitos 1.2, 1.3, 1.10, 1.11, 1.14, 1.15, 10.1, 10.3
+Valida: Requisitos 1.2, 1.3, 1.10, 1.11, 1.14, 1.15, 10.1, 10.3, 10.4
 """
 
 from __future__ import annotations
@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from moviebot.evals.silver.models import (
     NetflixHardConstraints,
+    SeedProvenance,
     SilverSeed,
     TmdbHardConstraints,
 )
@@ -25,7 +26,8 @@ def _make_provenance(**overrides: object) -> dict:
         "source": "netflix",
         "input_data_description": "Test data",
         "schema_version": "1.0.0",
-        "dataset_version": "silver_v1",
+        "silver_dataset_version": "silver_v1",
+        "canonical_dataset_version": "v1",
     }
     base.update(overrides)
     return base
@@ -433,3 +435,169 @@ class TestIsDefault:
     def test_netflix_not_default_with_score_range(self) -> None:
         c = NetflixHardConstraints(min_imdb_score=7.0, max_imdb_score=9.0)
         assert c.is_default() is False
+
+
+# ---------------------------------------------------------------------------
+# Tests: SeedProvenance model_validator for canonical_dataset_version (Req 10.4)
+# ---------------------------------------------------------------------------
+
+
+class TestProvenanceCanonicalDatasetVersion:
+    """SeedProvenance validator enforces canonical_dataset_version for netflix/both."""
+
+    def test_netflix_source_without_canonical_version_rejected(self) -> None:
+        """source='netflix' without canonical_dataset_version → ValidationError."""
+        with pytest.raises(ValidationError, match="canonical_dataset_version"):
+            SeedProvenance(
+                source="netflix",
+                input_data_description="Test data",
+                schema_version="1.0.0",
+                silver_dataset_version="silver_v1",
+                canonical_dataset_version=None,
+            )
+
+    def test_both_source_without_canonical_version_rejected(self) -> None:
+        """source='both' without canonical_dataset_version → ValidationError."""
+        with pytest.raises(ValidationError, match="canonical_dataset_version"):
+            SeedProvenance(
+                source="both",
+                input_data_description="Test data",
+                schema_version="1.0.0",
+                silver_dataset_version="silver_v1",
+                canonical_dataset_version=None,
+            )
+
+    def test_tmdb_source_without_canonical_version_accepted(self) -> None:
+        """source='tmdb' without canonical_dataset_version is valid."""
+        prov = SeedProvenance(
+            source="tmdb",
+            input_data_description="Test data",
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version=None,
+        )
+        assert prov.canonical_dataset_version is None
+        assert prov.source == "tmdb"
+
+    def test_synthetic_source_without_canonical_version_accepted(self) -> None:
+        """source='synthetic' without canonical_dataset_version is valid."""
+        prov = SeedProvenance(
+            source="synthetic",
+            input_data_description="OOS test",
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version=None,
+        )
+        assert prov.canonical_dataset_version is None
+        assert prov.source == "synthetic"
+
+    def test_netflix_source_with_canonical_version_accepted(self) -> None:
+        """source='netflix' with canonical_dataset_version is valid."""
+        prov = SeedProvenance(
+            source="netflix",
+            input_data_description="Test data",
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
+        )
+        assert prov.canonical_dataset_version == "v1"
+
+    def test_both_source_with_canonical_version_accepted(self) -> None:
+        """source='both' with canonical_dataset_version is valid."""
+        prov = SeedProvenance(
+            source="both",
+            input_data_description="Test data",
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
+        )
+        assert prov.canonical_dataset_version == "v1"
+
+
+# ---------------------------------------------------------------------------
+# Tests: SeedProvenance new provenance fields (Req 10.4)
+# ---------------------------------------------------------------------------
+
+
+class TestProvenanceNewFields:
+    """Test silver_dataset_version, canonical_dataset_version, etl_version fields."""
+
+    def test_silver_dataset_version_pattern_valid(self) -> None:
+        """silver_dataset_version with valid pattern is accepted."""
+        prov = SeedProvenance(
+            source="tmdb",
+            input_data_description="Test",
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1-beta",
+        )
+        assert prov.silver_dataset_version == "silver_v1-beta"
+
+    def test_silver_dataset_version_pattern_invalid_rejected(self) -> None:
+        """silver_dataset_version with invalid characters is rejected."""
+        with pytest.raises(ValidationError):
+            SeedProvenance(
+                source="tmdb",
+                input_data_description="Test",
+                schema_version="1.0.0",
+                silver_dataset_version="silver v1!",  # space and ! are invalid
+            )
+
+    def test_etl_version_valid_semver(self) -> None:
+        """etl_version with valid semver pattern is accepted."""
+        prov = SeedProvenance(
+            source="netflix",
+            input_data_description="Test",
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
+            etl_version="1.2.3",
+        )
+        assert prov.etl_version == "1.2.3"
+
+    def test_etl_version_invalid_pattern_rejected(self) -> None:
+        """etl_version with invalid semver pattern is rejected."""
+        with pytest.raises(ValidationError):
+            SeedProvenance(
+                source="netflix",
+                input_data_description="Test",
+                schema_version="1.0.0",
+                silver_dataset_version="silver_v1",
+                canonical_dataset_version="v1",
+                etl_version="v1.0",  # not valid semver pattern
+            )
+
+    def test_etl_version_none_is_valid(self) -> None:
+        """etl_version=None is valid (optional field)."""
+        prov = SeedProvenance(
+            source="tmdb",
+            input_data_description="Test",
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1",
+            etl_version=None,
+        )
+        assert prov.etl_version is None
+
+    def test_checksum_sha256_valid_pattern(self) -> None:
+        """checksum_sha256 with valid 64-char hex is accepted."""
+        checksum = "a" * 64
+        prov = SeedProvenance(
+            source="netflix",
+            input_data_description="Test",
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
+            checksum_sha256=checksum,
+        )
+        assert prov.checksum_sha256 == checksum
+
+    def test_checksum_sha256_invalid_pattern_rejected(self) -> None:
+        """checksum_sha256 with invalid pattern is rejected."""
+        with pytest.raises(ValidationError):
+            SeedProvenance(
+                source="netflix",
+                input_data_description="Test",
+                schema_version="1.0.0",
+                silver_dataset_version="silver_v1",
+                canonical_dataset_version="v1",
+                checksum_sha256="short",  # too short
+            )

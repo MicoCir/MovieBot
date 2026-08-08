@@ -78,6 +78,50 @@ Notas:
 
 Si en el futuro se necesitan tendencias mensuales o anuales, habrá que construirlas agregando snapshots diarios/semanales almacenados por la aplicación. Usar `discover/movie` con filtros de fecha sería una estrategia diferente, no equivalente a Trending.
 
+## Comandos del Pipeline
+
+### Ejecutar ETL (Netflix → Dataset Canónico)
+
+```bash
+uv run python -m moviebot.etl.netflix_etl --version v1
+```
+
+### Generar seeds del Silver Dataset
+
+```bash
+uv run python -m moviebot.evals.silver.batch_generator --canonical-version v1 --silver-version silver_v1
+```
+
+### Ingestar en Meilisearch
+
+```bash
+uv run python -m moviebot.indexer.meilisearch_indexer --canonical-version v1
+```
+
+### Búsqueda manual en Meilisearch
+
+```bash
+uv run python -m moviebot.repositories.netflix_meilisearch --query "action movies" --index netflix_v1
+```
+
+### Ejecutar tests unitarios
+
+```bash
+uv run pytest tests/ -m "not integration"
+```
+
+### Ejecutar tests de integración
+
+```bash
+uv run pytest tests/ -m integration
+```
+
+### Ejecutar tests de propiedades
+
+```bash
+uv run pytest tests/properties/
+```
+
 ## Tests
 
 ```bash
@@ -118,12 +162,14 @@ uv run mypy src/moviebot/
 
 ```
 src/moviebot/
-├── common/          # Config, modelos compartidos, errores, logging
-├── repositories/    # Conector TMDB, FixtureWriter, protocols
+├── common/          # Config, modelos compartidos, dependencies, logging
+├── etl/             # Pipeline ETL: CSVs → dataset canónico (JSONL)
+├── indexer/         # Meilisearch Indexer: dataset canónico → índice runtime
+├── repositories/    # Conector TMDB, Netflix Meilisearch repository, protocols
 ├── routing/         # Router de queries
-├── agents/          # Agentes TMDB y Netflix
+├── agents/          # Agentes TMDB y Netflix (modelos, intent extractor, agent)
 ├── evals/           # Evaluación offline
-│   └── silver/      # Silver Dataset: modelos, adaptadores, builder, validator, persistence
+│   └── silver/      # Silver Dataset: modelos, adaptadores, builder, batch_generator, validator, persistence
 ├── tools/           # Herramientas CLI (inspect_netflix)
 ├── app/             # Estado de la aplicación
 └── interface/       # API FastAPI
@@ -136,14 +182,16 @@ src/moviebot/
 | `raw_data/tmdb/trending_movies_v1.json` | Payload del fixture TMDB (respuesta real) |
 | `raw_data/tmdb/trending_movies_v1.metadata.json` | Metadatos de procedencia (checksum SHA-256, endpoint, timestamp UTC) |
 | `reports/netflix_inspection.json` | Reporte de inspección del dataset Netflix (determinista) |
+| `data/processed/netflix/{version}/titles.jsonl` | Dataset canónico Netflix (salida del ETL) |
+| `data/processed/netflix/{version}/metadata.json` | Metadata del dataset canónico (checksums, versiones, conteos) |
+| `data/processed/netflix/{version}/quality_report.json` | Reporte de calidad (registros descartados, nullificaciones) |
+| `config/meilisearch/index_registry.json` | Registry atómico de índices Meilisearch (puntero al índice activo) |
 
 ### Salida esperada (Silver Dataset)
-
-Los siguientes archivos se generarán cuando se construya físicamente el dataset usando la infraestructura de `moviebot.evals.silver`:
 
 | Archivo | Descripción |
 |---------|-------------|
 | `evals/datasets/silver_v1/seeds.jsonl` | Seeds estructurados del Silver Evaluation Dataset (JSONL) |
-| `evals/datasets/silver_v1/metadata.json` | Metadata del dataset (checksum, distribución por ruta, versión) |
+| `evals/datasets/silver_v1/metadata.json` | Metadata del dataset (checksum, distribución por ruta, versión, provenance canónico) |
 
 Ver [docs/02 - Guía Generación Silver Dataset.md](docs/02%20-%20Guía%20Generación%20Silver%20Dataset.md) para detalles del flujo de generación.

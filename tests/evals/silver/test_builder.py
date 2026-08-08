@@ -53,7 +53,8 @@ def builder(netflix_adapter, tmdb_adapter):
         netflix_adapter=netflix_adapter,
         tmdb_adapter=tmdb_adapter,
         schema_version="1.0.0",
-        dataset_version="silver_v1",
+        silver_dataset_version="silver_v1",
+        canonical_dataset_version="v1",
     )
 
 
@@ -207,7 +208,8 @@ class TestProperty6SeedItemsSubsetEligible:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         try:
@@ -240,7 +242,8 @@ class TestProperty6SeedItemsSubsetEligible:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         try:
@@ -281,7 +284,8 @@ class TestBuilderRejectsIncompatibleConstraints:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         # Force wrong constraint type (Python allows it at runtime for dataclasses)
@@ -310,7 +314,8 @@ class TestBuilderRejectsIncompatibleConstraints:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         request = NetflixSeedBuildRequest(
@@ -338,7 +343,8 @@ class TestBuilderRejectsSuccessWithEmptyEligible:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         # Constraints that produce empty eligible: min_year=2099 (no titles that recent)
@@ -361,7 +367,8 @@ class TestBuilderRejectsSuccessWithEmptyEligible:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         # Constraints that produce empty eligible: min_year=2099 (no records that recent)
@@ -388,7 +395,8 @@ class TestBuilderRejectsNonExistentIds:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         request = NetflixSeedBuildRequest(
@@ -410,7 +418,8 @@ class TestBuilderRejectsNonExistentIds:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         request = TrendingSeedBuildRequest(
@@ -457,7 +466,8 @@ class TestBuilderRejectsSemanticConceptsWithEmptyText:
             netflix_adapter=adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         request = NetflixSeedBuildRequest(
@@ -514,7 +524,8 @@ class TestBuilderRejectsSemanticConceptsWithEmptyText:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         request = TrendingSeedBuildRequest(
@@ -542,7 +553,8 @@ class TestBuilderRejectsBothWithEmptyComponent:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         request = BothSeedBuildRequest(
@@ -568,7 +580,8 @@ class TestBuilderRejectsBothWithEmptyComponent:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         request = BothSeedBuildRequest(
@@ -598,7 +611,8 @@ class TestBuilderNoResultsWithNonEmptySeedItems:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         request = NetflixSeedBuildRequest(
@@ -623,7 +637,8 @@ class TestBuilderNoResultsWithNonEmptySeedItems:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="1.0.0",
-            dataset_version="silver_v1",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version="v1",
         )
 
         request = TrendingSeedBuildRequest(
@@ -649,7 +664,7 @@ class TestBuilderOutOfScopeNoAdapters:
             netflix_adapter=None,
             tmdb_adapter=None,
             schema_version="2.0.0",
-            dataset_version="silver_v2",
+            silver_dataset_version="silver_v2",
         )
 
         request = OutOfScopeSeedBuildRequest(
@@ -677,7 +692,8 @@ class TestBuilderProvenanceUsesConstructorVersions:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="3.2.1",
-            dataset_version="custom_dataset",
+            silver_dataset_version="custom_dataset",
+            canonical_dataset_version="v1",
         )
 
         request = NetflixSeedBuildRequest(
@@ -693,7 +709,7 @@ class TestBuilderProvenanceUsesConstructorVersions:
         seed = builder.build(request)
 
         assert seed.provenance.schema_version == "3.2.1"
-        assert seed.provenance.dataset_version == "custom_dataset"
+        assert seed.provenance.silver_dataset_version == "custom_dataset"
 
     def test_trending_provenance_versions(self, netflix_adapter, tmdb_adapter) -> None:
         """Trending seed provenance uses schema_version and dataset_version from constructor."""
@@ -701,7 +717,8 @@ class TestBuilderProvenanceUsesConstructorVersions:
             netflix_adapter=netflix_adapter,
             tmdb_adapter=tmdb_adapter,
             schema_version="4.0.0",
-            dataset_version="another_version",
+            silver_dataset_version="another_version",
+            canonical_dataset_version="v1",
         )
 
         request = TrendingSeedBuildRequest(
@@ -717,7 +734,7 @@ class TestBuilderProvenanceUsesConstructorVersions:
         seed = builder.build(request)
 
         assert seed.provenance.schema_version == "4.0.0"
-        assert seed.provenance.dataset_version == "another_version"
+        assert seed.provenance.silver_dataset_version == "another_version"
 
     def test_out_of_scope_provenance_versions(self) -> None:
         """OUT_OF_SCOPE seed provenance uses constructor versions."""
@@ -725,7 +742,7 @@ class TestBuilderProvenanceUsesConstructorVersions:
             netflix_adapter=None,
             tmdb_adapter=None,
             schema_version="9.9.9",
-            dataset_version="oos_dataset",
+            silver_dataset_version="oos_dataset",
         )
 
         request = OutOfScopeSeedBuildRequest(
@@ -737,5 +754,307 @@ class TestBuilderProvenanceUsesConstructorVersions:
         seed = builder.build(request)
 
         assert seed.provenance.schema_version == "9.9.9"
-        assert seed.provenance.dataset_version == "oos_dataset"
+        assert seed.provenance.silver_dataset_version == "oos_dataset"
         assert seed.provenance.source == "synthetic"
+
+
+# ---------------------------------------------------------------------------
+# Tests: SeedBuilder with CanonicalNetflixAdapter (task 10.4)
+# **Validates: Requirements 3.7, 10.4**
+# ---------------------------------------------------------------------------
+
+
+class TestBuilderWithCanonicalAdapter:
+    """SeedBuilder works correctly with CanonicalNetflixAdapter via duck typing."""
+
+    def test_builder_uses_canonical_adapter_provenance(
+        self, tmdb_adapter, tmp_path
+    ) -> None:
+        """SeedBuilder extracts canonical_dataset_version, etl_version from adapter."""
+        import hashlib
+        import json
+
+        from moviebot.evals.silver.adapters import CanonicalNetflixAdapter
+
+        # Create a minimal canonical dataset for CanonicalNetflixAdapter
+        version = "test_v1"
+        version_dir = tmp_path / "canonical" / version
+        version_dir.mkdir(parents=True, exist_ok=True)
+
+        # Write titles.jsonl with one valid record
+        title_record = {
+            "id": "tm84618",
+            "title": "Taxi Driver",
+            "type": "movie",
+            "release_year": 1976,
+            "description": "A mentally unstable veteran.",
+            "age_certification": "R",
+            "genres": ["crime", "drama"],
+            "actors": ["robert de niro"],
+            "directors": ["martin scorsese"],
+            "imdb_score": 8.2,
+            "tmdb_score": 8.2,
+            "tmdb_popularity": 46.3,
+        }
+        titles_content = (
+            json.dumps(
+                title_record, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            )
+            + "\n"
+        )
+        titles_path = version_dir / "titles.jsonl"
+        titles_path.write_text(titles_content, encoding="utf-8")
+
+        # Compute checksum
+        titles_raw = titles_path.read_bytes()
+        checksum = hashlib.sha256(titles_raw).hexdigest()
+
+        # Write metadata.json
+        metadata = {
+            "canonical_dataset_version": version,
+            "etl_version": "1.0.0",
+            "schema_version": "1.0.0",
+            "document_count": 1,
+            "discarded_count": 0,
+            "source_checksums": {"titles.csv": "a" * 64, "credits.csv": "b" * 64},
+            "output_checksum_sha256": checksum,
+            "generated_at": "2024-01-15T10:00:00Z",
+            "type_distribution": {"movie": 1, "show": 0},
+        }
+        metadata_path = version_dir / "metadata.json"
+        metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+        # Create the adapter
+        adapter = CanonicalNetflixAdapter(
+            canonical_dataset_version=version,
+            base_dir=tmp_path / "canonical",
+        )
+
+        # Verify adapter exposes expected properties
+        assert adapter.canonical_dataset_version == version
+        assert adapter.etl_version == "1.0.0"
+        assert adapter.output_checksum_sha256 == checksum
+
+        # Create SeedBuilder with canonical adapter
+        builder = SeedBuilder(
+            netflix_adapter=adapter,
+            tmdb_adapter=tmdb_adapter,
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version=version,
+            etl_version="1.0.0",
+        )
+
+        # Build a Netflix seed
+        request = NetflixSeedBuildRequest(
+            case_id="canonical-adapter-test",
+            expected_status="SUCCESS",
+            seed_item_ids=["tm84618"],
+            hard_constraints=NetflixHardConstraints(type="movie"),
+            semantic_concepts=[],
+            difficulty="easy",
+            tags=[],
+        )
+
+        seed = builder.build(request)
+
+        # Verify provenance fields
+        assert seed.provenance.source == "netflix"
+        assert seed.provenance.canonical_dataset_version == version
+        assert seed.provenance.schema_version == "1.0.0"
+        assert seed.provenance.silver_dataset_version == "silver_v1"
+        assert seed.case_id == "canonical-adapter-test"
+
+    def test_builder_canonical_adapter_filter_works(
+        self, tmdb_adapter, tmp_path
+    ) -> None:
+        """CanonicalNetflixAdapter.filter() works correctly when used via SeedBuilder."""
+        import hashlib
+        import json
+
+        from moviebot.evals.silver.adapters import CanonicalNetflixAdapter
+
+        version = "test_v2"
+        version_dir = tmp_path / "canonical" / version
+        version_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create multiple titles for filtering
+        records = [
+            {
+                "id": "tm00001",
+                "title": "Movie One",
+                "type": "movie",
+                "release_year": 2020,
+                "description": "First movie.",
+                "genres": ["drama"],
+                "actors": ["actor one"],
+                "directors": ["director one"],
+            },
+            {
+                "id": "tm00002",
+                "title": "Movie Two",
+                "type": "movie",
+                "release_year": 2021,
+                "description": "Second movie.",
+                "genres": ["comedy"],
+                "actors": ["actor two"],
+                "directors": ["director two"],
+            },
+            {
+                "id": "ts00003",
+                "title": "Show One",
+                "type": "show",
+                "release_year": 2022,
+                "description": "A show.",
+                "genres": ["drama"],
+                "actors": ["actor one"],
+                "directors": ["director two"],
+            },
+        ]
+        lines = [
+            json.dumps(r, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+            for r in records
+        ]
+        titles_content = "\n".join(lines) + "\n"
+        titles_path = version_dir / "titles.jsonl"
+        titles_path.write_text(titles_content, encoding="utf-8")
+
+        titles_raw = titles_path.read_bytes()
+        checksum = hashlib.sha256(titles_raw).hexdigest()
+
+        metadata = {
+            "canonical_dataset_version": version,
+            "etl_version": "1.0.0",
+            "schema_version": "1.0.0",
+            "document_count": 3,
+            "discarded_count": 0,
+            "source_checksums": {"titles.csv": "a" * 64, "credits.csv": "b" * 64},
+            "output_checksum_sha256": checksum,
+            "generated_at": "2024-01-15T10:00:00Z",
+            "type_distribution": {"movie": 2, "show": 1},
+        }
+        metadata_path = version_dir / "metadata.json"
+        metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+        adapter = CanonicalNetflixAdapter(
+            canonical_dataset_version=version,
+            base_dir=tmp_path / "canonical",
+        )
+
+        # Build a seed with constraints that match specific titles
+        builder = SeedBuilder(
+            netflix_adapter=adapter,
+            tmdb_adapter=tmdb_adapter,
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version=version,
+            etl_version="1.0.0",
+        )
+
+        # Build seed filtering by type=movie → should match tm00001, tm00002
+        request = NetflixSeedBuildRequest(
+            case_id="canonical-filter-test",
+            expected_status="SUCCESS",
+            seed_item_ids=["tm00001"],
+            hard_constraints=NetflixHardConstraints(type="movie"),
+            semantic_concepts=[],
+            difficulty="easy",
+            tags=[],
+        )
+
+        seed = builder.build(request)
+
+        # eligible_item_ids should contain both movies in sorted order
+        assert seed.eligible_item_ids == ["tm00001", "tm00002"]
+        assert "tm00001" in seed.seed_item_ids
+
+    def test_builder_canonical_adapter_actors_filter(
+        self, tmdb_adapter, tmp_path
+    ) -> None:
+        """CanonicalNetflixAdapter filter with actors constraint (OR semantics)."""
+        import hashlib
+        import json
+
+        from moviebot.evals.silver.adapters import CanonicalNetflixAdapter
+
+        version = "test_v3"
+        version_dir = tmp_path / "canonical" / version
+        version_dir.mkdir(parents=True, exist_ok=True)
+
+        records = [
+            {
+                "id": "tm00001",
+                "title": "Movie A",
+                "type": "movie",
+                "release_year": 2020,
+                "description": "Movie A desc.",
+                "genres": ["drama"],
+                "actors": ["actor one", "actor three"],
+                "directors": ["director one"],
+            },
+            {
+                "id": "tm00002",
+                "title": "Movie B",
+                "type": "movie",
+                "release_year": 2021,
+                "description": "Movie B desc.",
+                "genres": ["comedy"],
+                "actors": ["actor two"],
+                "directors": ["director two"],
+            },
+        ]
+        lines = [
+            json.dumps(r, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+            for r in records
+        ]
+        titles_content = "\n".join(lines) + "\n"
+        titles_path = version_dir / "titles.jsonl"
+        titles_path.write_text(titles_content, encoding="utf-8")
+
+        titles_raw = titles_path.read_bytes()
+        checksum = hashlib.sha256(titles_raw).hexdigest()
+
+        metadata = {
+            "canonical_dataset_version": version,
+            "etl_version": "2.0.0",
+            "schema_version": "1.0.0",
+            "document_count": 2,
+            "discarded_count": 0,
+            "source_checksums": {"titles.csv": "a" * 64, "credits.csv": "b" * 64},
+            "output_checksum_sha256": checksum,
+            "generated_at": "2024-01-15T10:00:00Z",
+            "type_distribution": {"movie": 2, "show": 0},
+        }
+        metadata_path = version_dir / "metadata.json"
+        metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+        adapter = CanonicalNetflixAdapter(
+            canonical_dataset_version=version,
+            base_dir=tmp_path / "canonical",
+        )
+
+        builder = SeedBuilder(
+            netflix_adapter=adapter,
+            tmdb_adapter=tmdb_adapter,
+            schema_version="1.0.0",
+            silver_dataset_version="silver_v1",
+            canonical_dataset_version=version,
+            etl_version="2.0.0",
+        )
+
+        # Filter by actors (OR semantics) — "actor one" is in tm00001
+        request = NetflixSeedBuildRequest(
+            case_id="canonical-actors-test",
+            expected_status="SUCCESS",
+            seed_item_ids=["tm00001"],
+            hard_constraints=NetflixHardConstraints(actors=["actor one"]),
+            semantic_concepts=[],
+            difficulty="easy",
+            tags=[],
+        )
+
+        seed = builder.build(request)
+
+        # Only tm00001 has "actor one"
+        assert seed.eligible_item_ids == ["tm00001"]
+        assert seed.provenance.canonical_dataset_version == version

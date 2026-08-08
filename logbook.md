@@ -51,3 +51,38 @@ Se corrigieron dos inconsistencias semánticas detectadas en revisión: (1) el m
 ### Resumen
 
 Se implementó el paquete `src/moviebot/evals/silver/` con cinco módulos: modelos Pydantic del seed estructurado (`models.py`) con discriminador explícito para round-trip JSON, adaptadores deterministas para Netflix CSV y fixture TMDB (`adapters.py`) con filtrado, builder programático (`builder.py`) con API discriminada por ruta y validaciones de consistencia, validador exhaustivo (`validator.py`) con 14 categorías de error que nunca lanza excepciones, y persistencia atómica (`persistence.py`) con staging+rename, protección contra sobreescritura y checksums SHA-256 por seed. Se escribieron 118 tests (40 modelos, 16 adaptadores, 18 builder, 26 validador, 17 persistencia, 1 integración) incluyendo 8 propiedades basadas en Hypothesis, implementadas mediante 10 tests property-based (determinismo, corrección de filtrado, round-trip, subset invariante, no-contaminación, determinismo de persistencia). Todos los tests corren con bloqueo de red autouse. No se introdujeron dependencias nuevas. Quality gates en verde: pytest (289 tests), ruff check, ruff format, mypy.
+
+---
+
+## Entrada 6
+
+**Sprint:** 3 — Netflix Data Pipeline
+**Tarea:** Pipeline ETL determinista + Meilisearch Indexer + Netflix Repository + Batch Generator
+
+### Resumen
+
+Se implementó el pipeline completo de datos Netflix con 58 tareas ejecutadas en 16 waves paralelas. Los componentes principales:
+
+1. **ETL Module** (`src/moviebot/etl/`): Funciones puras de normalización (`transformers.py`), modelos de quality report (`quality_report.py`), schema canónico Pydantic (`schema.py` con `CanonicalNetflixTitle` + `EtlMetadata`), y orquestador `NetflixEtl` con escritura atómica (tmp+rename), join de créditos con deduplicación (key=(id,role,person_id), resolución por nombre lex-menor), serialización determinista JSONL (`sort_keys=True, separators=(",",":")`) y generación de checksums SHA-256.
+
+2. **Canonical Adapter** (`src/moviebot/evals/silver/adapters.py`): `CanonicalNetflixAdapter` que reemplaza el parsing CSV directo, lee desde el JSONL canónico, valida integridad via checksum y version matching, y provee filtrado exhaustivo (genres AND, actors OR, directors OR) para ground truth.
+
+3. **Meilisearch Indexer** (`src/moviebot/indexer/`): `MeilisearchIndexer` con idempotencia (checksums matching → skip), immutabilidad (never overwrite), detección de índices no controlados, cleanup en fallo, activación atómica del registry (`index_registry.json`), y `settings_checksum` determinista.
+
+4. **Netflix Repository** (`src/moviebot/repositories/netflix_meilisearch.py`): `MeilisearchNetflixRepository` traduciendo `NetflixQuery` a filtros Meilisearch (genres AND, actors OR, directors OR, inter-campo AND), con `asyncio.to_thread()` para wrappear SDK sync, y retorno de lista vacía en error.
+
+5. **Intent Extractor** (`src/moviebot/agents/netflix/intent_extractor.py`): `IntentExtractorProtocol` + `LlmIntentExtractor` usando OpenAI structured output con prompt para extracción de nombres completos de actores/directores.
+
+6. **Batch Generator** (`src/moviebot/evals/silver/batch_generator.py`): Orquesta 150 seeds desde `case_catalog.json` con validación de distribución (50/50/25/25), cuota NO_RESULTS (7/3/0), re-validación exhaustiva, y abort on SeedBuildError.
+
+7. **Provenance Updates**: Rename `dataset_version` → `silver_dataset_version` en `SeedProvenance` y `DatasetMetadata`, campos `canonical_dataset_version`, `etl_version`, `checksum_sha256` con model_validator para netflix/both sources.
+
+8. **CLI Entrypoints**: 4 módulos con `if __name__ == "__main__"` blocks (ETL, Batch Generator, Indexer, Search).
+
+9. **Runtime Wiring** (`src/moviebot/common/dependencies.py`): `resolve_active_index` con precedencia (explicit → registry → error), factories para repository e intent extractor, y `NetflixAgent` como composition point.
+
+**Tests escritos:** 653 tests offline (unit + property), 52 integration tests (ETL e2e + pipeline roundtrip), 21 integration Meilisearch (requieren servidor). Property tests validan: determinismo ETL, normalización total, credit dedup, filtrado exhaustivo, construcción de filtros, mapeo de hits, registry integrity, IMDb rejection, batch invariantes, NO_RESULTS quota.
+
+**Documentación actualizada:** README con comandos del pipeline, docs/00 con tabla de componentes y diagrama de flujo, docs/01 con infraestructura de datos, docs/02 con arquitectura completa y flujo batch.
+
+Quality gates: 653 tests offline pasan, 52 integración ETL+pipeline pasan. Ruff check, ruff format y mypy sin errores. 21 tests de integración Meilisearch requieren servidor local. 1 warning residual de terceros (Starlette/httpx deprecation).

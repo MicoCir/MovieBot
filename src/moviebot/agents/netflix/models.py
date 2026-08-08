@@ -13,6 +13,8 @@ class NetflixQuery(BaseModel):
     min_year: int | None = None
     max_year: int | None = None
     age_certification: list[str] = Field(default_factory=list)
+    actors: list[str] = Field(default_factory=list)
+    directors: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_year_range(self) -> Self:

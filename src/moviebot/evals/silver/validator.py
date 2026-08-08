@@ -5,7 +5,11 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from moviebot.evals.silver.adapters import NetflixAdapter, TmdbAdapter
+from moviebot.evals.silver.adapters import (
+    CanonicalNetflixAdapter,
+    NetflixAdapter,
+    TmdbAdapter,
+)
 from moviebot.evals.silver.models import (
     NetflixHardConstraints,
     SilverSeed,
@@ -44,7 +48,7 @@ class SeedValidator:
 
     def __init__(
         self,
-        netflix_adapter: NetflixAdapter | None = None,
+        netflix_adapter: NetflixAdapter | CanonicalNetflixAdapter | None = None,
         tmdb_adapter: TmdbAdapter | None = None,
     ) -> None:
         """Configura adaptadores opcionales para validación."""
@@ -1147,6 +1151,8 @@ class SeedValidator:
 
         try:
             recalculated = self._netflix.filter(constraints)
+            if recalculated is None:
+                recalculated = []
             if sorted(eligible_item_ids) != sorted(recalculated):
                 stored_set = set(eligible_item_ids)
                 calc_set = set(recalculated)

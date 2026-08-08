@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
@@ -11,7 +13,8 @@ class Settings(BaseSettings):
     tmdb_api_key: SecretStr
     meilisearch_url: str = "http://localhost:7700"
     meilisearch_api_key: SecretStr | None = None
-    meilisearch_index: str = "netflix"
+    meilisearch_index: str | None = None
+    meilisearch_registry_path: Path = Path("config/meilisearch/index_registry.json")
     log_level: str = "INFO"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
