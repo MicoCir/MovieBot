@@ -6,7 +6,19 @@ El Silver Evaluation Dataset es un conjunto de **seeds estructurados** que repre
 
 La generación es completamente **offline y determinista**: no requiere llamadas de red ni uso de LLMs. Opera exclusivamente sobre los datasources locales (dataset canónico Netflix JSONL y fixture TMDB).
 
-> **Nota:** Esta guía documenta la infraestructura programática para construir seeds. El pipeline está operativo: `BatchGenerator` lee un catálogo declarativo (`config/evals/silver_v1/case_catalog.json`) y produce los 150 seeds. Lo que se describe aquí es el contrato, las validaciones y el flujo de persistencia.
+> **Nota:** Esta guía documenta la infraestructura programática para construir seeds. El código del pipeline está implementado, pero el catálogo declarativo (`config/evals/silver_v1/case_catalog.json`) no forma parte de este checkout. Por tanto, el batch no puede ejecutarse hasta que ese catálogo se cree y se versiona junto al proyecto. La creación del catálogo es determinista y no requiere LLM; sí requiere decisiones de diseño sobre las consultas que se quieren evaluar.
+
+## Estado de la implementación
+
+En el estado actual del repositorio:
+
+- Los CSV de Netflix están disponibles en `raw_data/netflix/`.
+- El fixture TMDB y su checksum están disponibles en `raw_data/tmdb/`.
+- El ETL y los adaptadores offline están implementados y validados por tests.
+- Falta `config/evals/silver_v1/case_catalog.json`, que es el input declarativo que falta para producir los 150 seeds.
+- No se necesita `OPENAI_API_KEY`, Meilisearch ni conexión de red para ejecutar el ETL y el `BatchGenerator` con esos inputs locales.
+
+La guía debe leerse, por tanto, en este orden: preparar datasources, crear el catálogo, validarlo y ejecutar el batch.
 
 ## Arquitectura del Sistema
 
@@ -70,7 +82,9 @@ Silver Dataset               (NetflixQuery → búsqueda runtime)
 1. **Dataset canónico generado:** Ejecutar el ETL (`python -m moviebot.etl.netflix_etl --version v1`) para producir `data/processed/netflix/v1/titles.jsonl` + `metadata.json` a partir de los CSVs crudos
 2. CSVs fuente disponibles en `raw_data/netflix/titles.csv` y `raw_data/netflix/credits.csv` (input del ETL)
 3. Fixture TMDB capturado en `raw_data/tmdb/trending_movies_v1.json` con su metadata de checksum
-4. **Para runtime:** Meilisearch corriendo localmente; ejecutar el indexer (`python -m moviebot.indexer.meilisearch_indexer --canonical-version v1`) para poblar el índice
+4. Catálogo declarativo creado en `config/evals/silver_v1/case_catalog.json` (ver la sección siguiente)
+
+Meilisearch solo es necesario para probar el runtime de Netflix. No es un prerequisito para generar el Silver Dataset.
 
 ## Conceptos Clave
 
@@ -103,6 +117,109 @@ Restricciones verificables determinísticamente contra el datasource:
 Conjunto exhaustivo de IDs que satisfacen TODOS los hard constraints de un seed. Se calcula automáticamente por el builder cuando los constraints son no-default. Es `None` cuando el seed solo tiene `semantic_concepts` (no calculable determinísticamente).
 
 ## Flujo de Generación
+
+### 0. Crear el catálogo declarativo
+
+El repositorio no genera automáticamente el catálogo: debe crearse como un artefacto de diseño, revisarse y versionarse. El catálogo contiene solicitudes de construcción, no `SilverSeed` ya calculados. El `BatchGenerator` calcula `eligible_item_ids`, la procedencia y los checksums a partir de los datasources locales.
+
+Crear el directorio y el archivo:
+
+```powershell
+New-Item -ItemType Directory -Force -Path config/evals/silver_v1
+```
+
+La estructura mínima del archivo es:
+
+```json
+{
+  "version": "1.0.0",
+  "seeds": [
+    {
+      "case_id": "netflix-action-001",
+      "route": "netflix",
+      "expected_status": "SUCCESS",
+      "seed_item_ids": ["tm00001"],
+      "hard_constraints": {
+        "constraint_type": "netflix",
+        "type": "movie",
+        "genres": ["action"],
+        "min_year": 2010
+      },
+      "semantic_concepts": [],
+      "difficulty": "easy",
+      "tags": ["genre", "year"]
+    },
+    {
+      "case_id": "trending-no-results-001",
+      "route": "trending",
+      "expected_status": "NO_RESULTS",
+      "seed_item_ids": [],
+      "hard_constraints": {
+        "constraint_type": "tmdb",
+        "min_year": 2099
+      },
+      "semantic_concepts": [],
+      "difficulty": "hard",
+      "tags": ["no-results"]
+    },
+    {
+      "case_id": "both-action-001",
+      "route": "both",
+      "tmdb_component": {
+        "seed_item_ids": ["tmdb:969681"],
+        "hard_constraints": {
+          "constraint_type": "tmdb",
+          "genre_ids": [28]
+        },
+        "semantic_concepts": []
+      },
+      "netflix_component": {
+        "seed_item_ids": ["tm00001"],
+        "hard_constraints": {
+          "constraint_type": "netflix",
+          "type": "movie",
+          "genres": ["action"]
+        },
+        "semantic_concepts": []
+      },
+      "difficulty": "hard",
+      "tags": ["multi-source"]
+    },
+    {
+      "case_id": "out-of-scope-001",
+      "route": "out_of_scope",
+      "difficulty": "easy",
+      "tags": ["out-of-scope"]
+    }
+  ]
+}
+```
+
+Los IDs del ejemplo son ilustrativos: deben sustituirse por IDs reales del datasource cargado. Para descubrir candidatos antes de escribir cada caso:
+
+```bash
+uv run python -c "from moviebot.evals.silver.adapters import CanonicalNetflixAdapter; from moviebot.evals.silver.models import NetflixHardConstraints; a=CanonicalNetflixAdapter(canonical_dataset_version='v1'); print(a.filter(NetflixHardConstraints(type='movie', genres=['action']))[:20])"
+uv run python -c "from moviebot.evals.silver.adapters import TmdbAdapter; from moviebot.evals.silver.models import TmdbHardConstraints; a=TmdbAdapter(fixture_version='v1'); print(a.filter(TmdbHardConstraints(genre_ids=[28]))[:20])"
+```
+
+Reglas que debe cumplir el catálogo completo:
+
+| Ruta | Casos | Estado y campos relevantes |
+|------|------:|----------------------------|
+| `netflix` | 50 | 43 `SUCCESS` y 7 `NO_RESULTS`; constraints `NetflixHardConstraints` |
+| `trending` | 50 | 47 `SUCCESS` y 3 `NO_RESULTS`; constraints `TmdbHardConstraints` |
+| `both` | 25 | Siempre `SUCCESS`; un componente TMDB y otro Netflix |
+| `out_of_scope` | 25 | Solo `difficulty`/`tags`; no tiene IDs ni constraints |
+
+Además, todos los `case_id` deben ser únicos y cumplir `^[a-zA-Z0-9_-]+$` con un máximo de 64 caracteres. En Silver v1 no se permiten `min_imdb_score` ni `max_imdb_score`. Un caso `SUCCESS` debe tener al menos un ID que satisfaga todos sus hard constraints; un caso `NO_RESULTS` debe tener `seed_item_ids: []` y sus constraints deben devolver exactamente cero IDs. Si se usan `semantic_concepts`, el título/overview asociado debe tener texto no vacío.
+
+Validar primero la forma, la distribución y la cuota del catálogo:
+
+```bash
+uv run python -c "from pathlib import Path; from moviebot.evals.silver.case_catalog import load_case_catalog; cases=load_case_catalog(Path('config/evals/silver_v1/case_catalog.json')); print(f'Catalogo valido: {len(cases)} casos')"
+```
+
+Esta validación no sustituye a la ejecución del batch: el `BatchGenerator` vuelve a validar IDs, constraints, elegibles y procedencia contra los datasources reales.
 
 ### 1. Instanciar Adaptadores
 
